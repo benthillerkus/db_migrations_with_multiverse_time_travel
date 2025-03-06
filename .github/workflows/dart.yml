@@ -20,9 +20,6 @@ jobs:
       
       - uses: dart-lang/setup-dart@v1
 
-      - name: Setup SQLite environment
-        uses: ccorsi/setup-sqlite@v1.2.1
-
       - name: Install dependencies
         run: dart pub get
 
