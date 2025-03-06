@@ -1,18 +1,16 @@
-// import 'dart:ffi';
+import 'dart:ffi';
 // import 'dart:io';
 
-// import 'package:sqlite3/open.dart';
+import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 // import 'package:path/path.dart';
 
 void main() {
   setUpAll(() {
-    // open.overrideFor(OperatingSystem.linux, () {
-    //   final scriptDir = File(Platform.script.toFilePath()).parent;
-    //   final libraryNextToScript = File(join(scriptDir.path, 'sqlite3.so'));
-    //   return DynamicLibrary.open(libraryNextToScript.path);
-    // });
+    open.overrideFor(OperatingSystem.linux, () {
+      return DynamicLibrary.open('sqlite3.so');
+    });
   });
 
   late Database db;
