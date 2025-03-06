@@ -1,7 +1,8 @@
 name: sqlite3_migrations_with_multiverse_timetravel
 description: A starting point for Dart libraries or applications.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/benthillerkus/db_migrations_with_multiverse_timetravel
+issue_tracker: https://github.com/benthillerkus/db_migrations_with_multiverse_timetravel/issues
 
 environment:
   sdk: '>=3.7.0-323.0.dev'
@@ -10,8 +11,8 @@ resolution: workspace
 
 # Add regular dependencies here.
 dependencies:
-  db_migrations_with_multiverse_timetravel:
-  sqlite3: ^2.7.4
+  db_migrations_with_multiverse_timetravel: ^1.0.0
+  sqlite3: '>=2.0.0 <3.0.0'
 
 dev_dependencies:
   lints: ^5.0.0

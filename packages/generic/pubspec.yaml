@@ -1,12 +1,16 @@
 name: db_migrations_with_multiverse_timetravel
 description: Runs database migrations for apps with local / embedded databases like SQLite. Helps with checking out different branches during development by storing the instructions to run down migrations alongside the data in the db.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/benthillerkus/db_migrations_with_multiverse_timetravel
+issue_tracker: https://github.com/benthillerkus/db_migrations_with_multiverse_timetravel/issues
 
 environment:
   sdk: '>=3.7.0-323.0.dev'
 
 resolution: workspace
+
+dependencies:
+  logging: ^1.3.0
 
 dev_dependencies:
   lints: ^5.0.0

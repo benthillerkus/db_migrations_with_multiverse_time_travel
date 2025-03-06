@@ -1,8 +1,10 @@
 name: workspace
 version: 1.0.0
 publish_to: none
+repository: https://github.com/benthillerkus/db_migrations_with_multiverse_timetravel
+issue_tracker: https://github.com/benthillerkus/db_migrations_with_multiverse_timetravel/issues
 environment:
-  sdk: '>=3.7.0-323.0.dev'
+  sdk: ">=3.7.0-323.0.dev"
 workspace:
   - packages/generic
   - packages/sqlite3

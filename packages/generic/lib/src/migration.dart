@@ -1,4 +1,4 @@
-class Migration<T> {
+class Migration<T> implements Comparable<Migration<T>> {
   Migration({
     required DateTime definedAt,
     this.name,
@@ -52,8 +52,23 @@ class Migration<T> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Migration && runtimeType == other.runtimeType && definedAt == other.definedAt;
+      other is Migration &&
+          runtimeType == other.runtimeType &&
+          definedAt.isAtSameMomentAs(other.definedAt);
 
   @override
   int get hashCode => definedAt.hashCode;
+  
+  @override
+  int compareTo(Migration<T> other) {
+    return definedAt.compareTo(other.definedAt);
+  }
+
+  operator <(Migration<T> other) {
+    return definedAt.isBefore(other.definedAt);
+  }
+
+  operator >(Migration<T> other) {
+    return definedAt.isAfter(other.definedAt);
+  }
 }
