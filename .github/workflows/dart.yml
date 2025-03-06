@@ -39,7 +39,8 @@ jobs:
       # want to change this to 'flutter test'.
       - name: Run tests
         run: |
-          for dir in $(dart pub workspace list --format=path | grep -v '^./$'); do
+          dart pub get
+          for dir in $(dart pub workspace list --json | jq -r '.packages[] | select(.path != ".") | .path'); do
             echo "Running tests in $dir"
             (cd $dir && dart test)
           done
