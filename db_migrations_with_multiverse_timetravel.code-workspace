@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"name": "workspace",
+			"path": ".",
+		},
+		{
+			"path": "packages/generic"
+		},
+		{
+			"path": "packages/sqlite3"
+		}
+	],
+	"settings": {
+		"dart.showTodos": false,
+		"workbench.editor.customLabels.patterns": {
+			"**/*.dart": "${dirname}/${filename}"
+		},
+		"files.exclude": {
+			"**/.idea": true,
+			"**/.dart_tool": true,
+			"packages/": true,
+		}
+	}
+}

@@ -1,0 +1,8 @@
+name: _
+version: 1.0.0
+publish_to: none
+environment:
+  sdk: '>=3.7.0-323.0.dev'
+workspace:
+  - packages/generic
+  - packages/sqlite3
