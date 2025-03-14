@@ -49,6 +49,8 @@ class Migration<T> implements Comparable<Migration<T>> {
     return 'Migration{definedAt: $definedAt, name: $name, decription: $description, appliedAt: $appliedAt, up: $up, down: $down}';
   }
 
+  String get humanReadableId => name ?? definedAt.toString();
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

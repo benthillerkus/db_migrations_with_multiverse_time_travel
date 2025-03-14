@@ -1,7 +1,11 @@
+// ignore_for_file: unused_import
+
 import 'dart:ffi';
 
+import 'package:file/local.dart';
 import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
+import 'package:sqlite3_test/sqlite3_test.dart';
 import 'package:test/test.dart';
 
 void main() {

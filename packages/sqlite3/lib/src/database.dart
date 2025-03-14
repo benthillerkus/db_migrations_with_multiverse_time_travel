@@ -1,7 +1,7 @@
 import 'package:db_migrations_with_multiverse_timetravel/db_migrations_with_multiverse_timetravel.dart'
-    hide Database, AsyncDatabase;
-import 'package:db_migrations_with_multiverse_timetravel/db_migrations_with_multiverse_timetravel.dart'
     as multiverse;
+import 'package:db_migrations_with_multiverse_timetravel/db_migrations_with_multiverse_timetravel.dart'
+    hide Database, AsyncDatabase;
 import 'package:sqlite3/sqlite3.dart';
 
 class Sqlite3Database implements multiverse.Database<String> {
@@ -30,7 +30,7 @@ class Sqlite3Database implements multiverse.Database<String> {
   }
 
   @override
-  List<Migration<String>> readAllMigrations() {
+  Iterator<Migration<String>> retrieveAllMigrations() {
     return _db.select('''SELECT * FROM migrations ORDER BY defined_at ASC''').rows.map((row) {
       final [definedAt, name, description, appliedAt, up, down] = row;
 
@@ -45,21 +45,42 @@ class Sqlite3Database implements multiverse.Database<String> {
         up: up as String,
         down: down as String,
       );
-    }).toList();
+    }).iterator;
   }
 
   @override
-  void writeMigration(Migration<String> migration) {
-    _db.execute(
+  void storeMigrations(List<Migration<String>> migrations) {
+    final stmt = _db.prepare(
       '''INSERT INTO migrations (defined_at, name, description, applied_at, up, down) VALUES (?, ?, ?, ?, ?, ?)''',
-      [
+    );
+
+    for (final migration in migrations) {
+      stmt.execute([
         migration.definedAt.millisecondsSinceEpoch,
         migration.name,
         migration.description,
         migration.appliedAt?.millisecondsSinceEpoch,
         migration.up,
         migration.down,
-      ],
-    );
+      ]);
+    }
+
+    stmt.dispose();
+  }
+
+  @override
+  void removeMigrations(List<Migration<String>> migrations) {
+    final stmt = _db.prepare('''DELETE FROM migrations WHERE defined_at = ?''');
+
+    for (final migration in migrations) {
+      stmt.execute([migration.definedAt.millisecondsSinceEpoch]);
+    }
+
+    stmt.dispose();
+  }
+
+  @override
+  void performMigration(String migration) {
+    _db.execute(migration);
   }
 }
