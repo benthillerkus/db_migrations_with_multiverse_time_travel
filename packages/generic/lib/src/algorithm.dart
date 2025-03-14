@@ -9,6 +9,8 @@ extension MigrateExt<T> on Database<T> {
   }
 }
 
+// Unfortunatly this ended up being an object instead of a function
+// but this made it easier to test
 class Migrator<T> {
   Migrator({Logger? logger})
     : log = logger ?? Logger('db.migrate'),
@@ -32,13 +34,13 @@ class Migrator<T> {
   /// Check this property before calling [call].
   bool get working => _working;
 
-  late Database<T> _db;
+  Database<T>? _db;
 
   /// The migrations that are defined in code.
-  late Iterator<Migration<T>> _defined;
+  Iterator<Migration<T>>? _defined;
 
   /// The migrations that have been applied to the database.
-  late Iterator<Migration<T>> _applied;
+  Iterator<Migration<T>>? _applied;
 
   /// Whether there are any [_defined] migrations left to apply.
   ///
@@ -50,9 +52,41 @@ class Migrator<T> {
   /// This is the result of [_applied.moveNext].
   bool _hasApplied;
 
+  /// The previous migration obtained from [_defined] before calling [_defined.moveNext].
+  ///
+  /// Used to ensure that migrations are being iterated in the correct order.
+  Migration<T>? _previousDefined;
+
+  /// The previous migration obtained from [_applied] before calling [_applied.moveNext].
+  ///
+  /// Used to ensure that migrations are being iterated in the correct order.
+  Migration<T>? _previousApplied;
+
+  void _moveNextDefined() {
+    _previousDefined = _defined!.current;
+    _hasDefined = _defined!.moveNext();
+    if (_hasDefined && _previousDefined! >= _defined!.current) {
+      throw StateError(
+        'Defined migrations are not in ascending order: $_previousDefined should not come before ${_defined!.current}.',
+      );
+    }
+  }
+
+  void _moveNextApplied() {
+    _previousApplied = _applied!.current;
+    _hasApplied = _applied!.moveNext();
+    if (_hasApplied && _previousApplied! >= _applied!.current) {
+      throw StateError(
+        'Applied migrations are not in ascending order: $_previousApplied should not come before ${_applied!.current}.',
+      );
+    }
+  }
+
   /// Makes the migrator work with the given database and migrations.
   ///
-  /// Throws a [StateError] if the migrator is already [working].
+  /// Throws a [StateError] if the [Migration]s in [defined] are not in ascending order.
+  /// Throws a [StateError] the [Migration]s obtained from the db are not in ascending order.
+  /// Throws a [ConcurrentModificationError] if the migrator is already [working].
   /// To prevent this, check [working] before calling this method.
   void call({required Database<T> db, required Iterator<Migration<T>> defined}) {
     initialize(db, defined);
@@ -87,26 +121,26 @@ class Migrator<T> {
 
   /// Sets up the migrator to work with the given database and migrations.
   ///
-  /// Throws a [StateError] if the migrator is already [working].
+  /// Throws a [ConcurrentModificationError] if the migrator is already [working].
   @visibleForTesting
   void initialize(Database<T> db, Iterator<Migration<T>> defined) {
     log.finer('initializing migrator...');
     if (_working) {
-      throw StateError('Migrator is already working.');
+      throw ConcurrentModificationError(this);
     }
     _working = true;
 
     _db = db;
     _defined = defined;
 
-    if (!_db.isMigrationsTableInitialized()) {
+    if (!_db!.isMigrationsTableInitialized()) {
       log.fine('initializing migrations table');
-      _db.initializeMigrationsTable();
+      _db!.initializeMigrationsTable();
     }
 
     _applied = db.retrieveAllMigrations();
-    _hasDefined = _defined.moveNext();
-    _hasApplied = _applied.moveNext();
+    _hasDefined = _defined!.moveNext();
+    _hasApplied = _applied!.moveNext();
   }
 
   /// Find the last common migration between defined and applied migrations.
@@ -116,10 +150,10 @@ class Migrator<T> {
   Migration<T>? findLastCommonMigration() {
     log.finer('finding last common migration...');
     Migration<T>? lastCommon;
-    while (_hasDefined && _hasApplied && _defined.current == _applied.current) {
-      lastCommon = _defined.current;
-      _hasDefined = _defined.moveNext();
-      _hasApplied = _applied.moveNext();
+    while (_hasDefined && _hasApplied && _defined!.current == _applied!.current) {
+      lastCommon = _defined!.current;
+      _moveNextDefined();
+      _moveNextApplied();
     }
 
     if (lastCommon != null) {
@@ -142,14 +176,14 @@ class Migrator<T> {
     }
 
     final toRollback =
-        [for (; _hasApplied; _hasApplied = _applied.moveNext()) _applied.current].reversed.toList();
+        [for (; _hasApplied; _moveNextApplied()) _applied!.current].reversed.toList();
 
     for (final migration in toRollback) {
       log.finer('|_ - migration ${migration.humanReadableId}');
-      _db.performMigration(migration.down);
+      _db!.performMigration(migration.down);
     }
     log.finest('updating applied migrations database table...');
-    _db.removeMigrations(toRollback);
+    _db!.removeMigrations(toRollback);
   }
 
   @visibleForTesting
@@ -158,20 +192,25 @@ class Migrator<T> {
 
     final toApply = List<Migration<T>>.empty(growable: true);
     while (_hasDefined) {
-      final migration = _defined.current;
+      final migration = _defined!.current;
       log.finer('|_ + migration ${migration.humanReadableId}');
-      _db.performMigration(migration.up);
+      _db!.performMigration(migration.up);
       toApply.add(migration);
-      _hasDefined = _defined.moveNext();
+      _moveNextDefined();
     }
     log.finest('updating applied migrations database table...');
-    _db.storeMigrations(toApply);
+    _db!.storeMigrations(toApply);
   }
 
   @visibleForTesting
   void reset() {
+    _defined = null;
+    _applied = null;
     _hasDefined = false;
     _hasApplied = false;
+    _previousDefined = null;
+    _previousApplied = null;
+    _db = null;
     _working = false;
     log.finer('migrator resetted');
   }

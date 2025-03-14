@@ -37,4 +37,15 @@ void main() {
 
     expect(IterableEquality().equals(defined, db.applied), isTrue);
   });
+
+  test("Wrong order throws", () {
+    final defined = [
+      Migration(definedAt: DateTime(2025, 3, 6), up: null, down: null),
+      Migration(definedAt: DateTime(2025, 3, 7), up: null, down: null),
+      Migration(definedAt: DateTime(2025, 3, 5), up: null, down: null),
+    ];
+    final db = MockDatabase();
+
+    expect(() => migrator.call(db: db, defined: defined.iterator), throwsA(isA<StateError>()));
+  });
 }
