@@ -5,7 +5,7 @@ import 'package:meta/meta.dart';
 
 extension MigrateExt<T> on Database<T> {
   void migrate(List<Migration<T>> migrations) {
-    Migrator()(db: this, defined: migrations.iterator);
+    Migrator<T>()(db: this, defined: migrations.iterator);
   }
 }
 
@@ -65,7 +65,7 @@ class Migrator<T> {
   void _moveNextDefined() {
     _previousDefined = _defined!.current;
     _hasDefined = _defined!.moveNext();
-    if (_hasDefined && _previousDefined! >= _defined!.current) {
+    if (_hasDefined && (_previousDefined! >= _defined!.current)) {
       throw StateError(
         'Defined migrations are not in ascending order: $_previousDefined should not come before ${_defined!.current}.',
       );

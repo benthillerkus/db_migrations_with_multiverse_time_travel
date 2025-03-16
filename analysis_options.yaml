@@ -18,11 +18,21 @@ formatter:
 
 # Uncomment the following section to specify additional rules.
 
-# linter:
-#   rules:
-#     - camel_case_types
+linter:
+  rules:
+    - camel_case_types
+    - await_only_futures
+    - unawaited_futures
+    - unnecessary_async
+    - unnecessary_await_in_return
+    - public_member_api_docs
+    - unnecessary_nullable_for_final_variable_declarations
 
-# analyzer:
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
 #   exclude:
 #     - path/to/excluded/files/**
 

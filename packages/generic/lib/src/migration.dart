@@ -66,19 +66,19 @@ class Migration<T> implements Comparable<Migration<T>> {
     return definedAt.compareTo(other.definedAt);
   }
 
-  operator <(Migration<T> other) {
+  bool operator <(Migration<T> other) {
     return definedAt.isBefore(other.definedAt);
   }
 
-  operator >(Migration<T> other) {
+  bool operator >(Migration<T> other) {
     return definedAt.isAfter(other.definedAt);
   }
 
-  operator <=(Migration<T> other) {
+  bool operator <=(Migration<T> other) {
     return definedAt.isBefore(other.definedAt) || definedAt.isAtSameMomentAs(other.definedAt);
   }
 
-  operator >=(Migration<T> other) {
+  bool operator >=(Migration<T> other) {
     return definedAt.isAfter(other.definedAt) || definedAt.isAtSameMomentAs(other.definedAt);
   }
 }
