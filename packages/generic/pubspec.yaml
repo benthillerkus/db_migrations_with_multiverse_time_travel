@@ -3,6 +3,7 @@ description: Runs database migrations for apps with local / embedded databases l
 version: 1.0.0
 repository: https://github.com/benthillerkus/db_migrations_with_multiverse_timetravel
 issue_tracker: https://github.com/benthillerkus/db_migrations_with_multiverse_timetravel/issues
+topics: ["database", "migration"]
 
 environment:
   sdk: ">=3.7.0-323.0.dev <4.0.0"
