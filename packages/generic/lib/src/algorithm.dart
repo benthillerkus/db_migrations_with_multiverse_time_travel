@@ -3,15 +3,24 @@ import 'database.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 
+/// An extension on [Database] that adds a [migrate] method.
 extension MigrateExt<T> on Database<T> {
+  /// Migrates the database using the given [migrations].
   void migrate(List<Migration<T>> migrations) {
     Migrator<T>()(db: this, defined: migrations.iterator);
   }
 }
 
+/// A migrator that applies and rolls back migrations.
+/// 
+/// Use [call] to perform a schema update.
 // Unfortunatly this ended up being an object instead of a function
 // but this made it easier to test
 class Migrator<T> {
+  /// Creates a new [Migrator] with an optional [logger].
+  /// 
+  /// The [logger] is used to log messages during the migration process.
+  /// If no [Logger] is provided, a new logger named 'db.migrate' is created.
   Migrator({Logger? logger})
     : log = logger ?? Logger('db.migrate'),
       _hasDefined = false,
@@ -165,7 +174,11 @@ class Migrator<T> {
     return lastCommon;
   }
 
-  /// Rollback all incoming applied migrations.
+  /// Rollback all incoming [_applied] migrations.
+  /// 
+  /// This is done in reverse order: the last applied [Migration] is rolled back first.
+  /// 
+  /// The migrations are then removed from the migrations table in the [Database].
   @visibleForTesting
   void rollbackRemainingAppliedMigrations() {
     log.fine('rolling back applied migrations...');
@@ -186,6 +199,11 @@ class Migrator<T> {
     _db!.removeMigrations(toRollback);
   }
 
+  /// Apply all remaining defined migrations.
+  /// 
+  /// The migrations are applied in order: the first defined [Migration] is applied first.
+  /// 
+  /// The migrations are then added to the migrations table in the [Database].
   @visibleForTesting
   void applyRemainingDefinedMigrations() {
     log.fine('applying all remaining defined migrations');
@@ -202,6 +220,7 @@ class Migrator<T> {
     _db!.storeMigrations(toApply);
   }
 
+  /// Resets the migrator to its initial state, allowing it to be used again.
   @visibleForTesting
   void reset() {
     _defined = null;
