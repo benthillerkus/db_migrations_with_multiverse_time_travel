@@ -80,6 +80,10 @@ final migrator = SyncMigrator()(db: myDatabase, defined: migrations);
 
 ### What to do when there are two incompatible migrations on different branches?
 
+> [!NOTE]
+> The following two examples have been implemented as a test case
+> for the sqlite3 integration: [integration_test.dart](packages/sqlite3/text/integration_test.dart)
+
 Switching between branches is always fine, because the database will first be migrated down to the point where both branches diverged and then other bramch is being taken for the up migrations.
 
 Imagine two feature branches `a` and `b` with different changes to the database and the `main` branch with neither change.
