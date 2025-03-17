@@ -31,4 +31,33 @@ void main() {
     db.userVersion = 1;
     expect(db.userVersion, 1);
   });
+
+  test('Insertion', () {
+    db.execute('CREATE TABLE tbl (a TEXT)');
+    db.execute('INSERT INTO tbl (a) VALUES (?)', ['hello']);
+    expect(db.select('SELECT * FROM tbl'), [
+      {'a': 'hello'},
+    ]);
+    db.execute('INSERT INTO tbl (a) VALUES (?)', ['world']);
+    expect(db.select('SELECT * FROM tbl'), [
+      {'a': 'hello'},
+      {'a': 'world'},
+    ]);
+  });
+
+  group('Transactions', () {
+    test('A', () {
+      db.execute('BEGIN TRANSACTION');
+      db.execute('CREATE TABLE tbl (a TEXT)');
+      db.execute('INSERT INTO tbl (a) VALUES (?)', ['hello']);
+      expect(db.select('SELECT * FROM tbl'), [
+        {'a': 'hello'},
+      ]);
+      db.execute('ROLLBACK');
+      expect(
+        db.select("SELECT * FROM sqlite_master WHERE type='table' AND name='tbl'"),
+        <dynamic>[],
+      );
+    });
+  });
 }
