@@ -18,7 +18,7 @@ void main() {
   });
 
   test("Single migration", () {
-    final defined = [Migration(definedAt: DateTime(2025, 3, 6), up: null, down: null)];
+    final defined = [Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null)];
     final db = MockDatabase<void>();
 
     migrator.call(db: db, defined: defined.iterator);
@@ -28,9 +28,9 @@ void main() {
 
   test("Multiple migrations", () {
     final defined = [
-      Migration(definedAt: DateTime(2025, 3, 6), up: null, down: null),
-      Migration(definedAt: DateTime(2025, 3, 7), up: null, down: null),
-      Migration(definedAt: DateTime(2025, 3, 8), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
     ];
     final db = MockDatabase<void>();
 
@@ -41,9 +41,9 @@ void main() {
 
   test("Wrong order throws", () {
     final defined = [
-      Migration(definedAt: DateTime(2025, 3, 6), up: null, down: null),
-      Migration(definedAt: DateTime(2025, 3, 7), up: null, down: null),
-      Migration(definedAt: DateTime(2025, 3, 5), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 5), up: null, down: null),
     ];
     final db = MockDatabase<void>();
 
@@ -55,9 +55,9 @@ void main() {
 
   test('Rollback no common', () {
     final db = MockDatabase([
-      Migration(definedAt: DateTime(2025, 3, 6), up: null, down: null),
-      Migration(definedAt: DateTime(2025, 3, 7), up: null, down: null),
-      Migration(definedAt: DateTime(2025, 3, 8), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
     ]);
 
     SyncMigrator<Null>().call(db: db, defined: <Migration<Null>>[].iterator);
@@ -67,14 +67,14 @@ void main() {
 
   test('Rollback some common', () {
     final defined = [
-      Migration(definedAt: DateTime(2025, 3, 6), up: null, down: null),
-      Migration(definedAt: DateTime(2025, 3, 9), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 9), up: null, down: null),
     ];
 
     final db = MockDatabase([
-      Migration(definedAt: DateTime(2025, 3, 6), up: null, down: null),
-      Migration(definedAt: DateTime(2025, 3, 7), up: null, down: null),
-      Migration(definedAt: DateTime(2025, 3, 8), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+      Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
     ]);
 
     SyncMigrator<Null>().call(db: db, defined: defined.iterator);

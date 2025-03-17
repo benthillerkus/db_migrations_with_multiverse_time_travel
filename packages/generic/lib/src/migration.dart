@@ -1,13 +1,15 @@
 /// A change to the database that can be applied and rolled back.
-/// 
+///
 /// A migration is implemented as a simple data class that uses [definedAt] as the primary key.
 ///
 /// Migrations have to be serialized and deserialized preserving atleast [definedAt] and [down]
 /// to be able to make [SyncMigrator] work.
 class Migration<T> implements Comparable<Migration<T>> {
   /// Creates a new migration data class instance.
-  /// 
+  ///
   /// Make sure that [definedAt] is unique for each migration and represents the time the code was edited.
+  ///
+  /// Throws an [ArgumentError] if [definedAt] is not in UTC.
   Migration({
     required DateTime definedAt,
     this.name,
@@ -18,7 +20,12 @@ class Migration<T> implements Comparable<Migration<T>> {
   }) : // Ensures that the DateTime is in UTC and also truncates the microseconds,
        // so that it's not a problem if microsecond precision is not supported by the database.
        definedAt = DateTime.fromMillisecondsSinceEpoch(
-         definedAt.toUtc().millisecondsSinceEpoch,
+         (() {
+           if (!definedAt.isUtc) {
+             throw ArgumentError.value(definedAt, 'definedAt', 'must be in UTC');
+           }
+           return definedAt;
+         })().millisecondsSinceEpoch,
          isUtc: true,
        );
 
@@ -70,7 +77,7 @@ class Migration<T> implements Comparable<Migration<T>> {
 
   @override
   int get hashCode => definedAt.hashCode;
-  
+
   @override
   int compareTo(Migration<T> other) {
     return definedAt.compareTo(other.definedAt);
