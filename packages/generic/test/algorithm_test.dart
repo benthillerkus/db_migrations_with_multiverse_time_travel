@@ -47,6 +47,9 @@ void main() {
     final db = MockDatabase();
 
     expect(() => migrator.call(db: db, defined: defined.iterator), throwsA(isA<StateError>()));
+
+    // Ensure that the database is still empty (rollback was successful).
+    expect(db.applied, isEmpty);
   });
 
   test('Rollback no common', () {
