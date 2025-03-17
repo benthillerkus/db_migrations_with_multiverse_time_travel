@@ -10,19 +10,20 @@ void main() {
     setUpLogging();
   });
 
-  final migrator = SyncMigrator();
+  final migrator = SyncMigrator<void>();
+  final eq = IterableEquality<Migration<void>>();
 
   test("Empty", () {
-    migrator.call(db: MockDatabase(), defined: <Migration>[].iterator);
+    migrator.call(db: MockDatabase(), defined: <Migration<void>>[].iterator);
   });
 
   test("Single migration", () {
     final defined = [Migration(definedAt: DateTime(2025, 3, 6), up: null, down: null)];
-    final db = MockDatabase();
+    final db = MockDatabase<void>();
 
     migrator.call(db: db, defined: defined.iterator);
 
-    expect(IterableEquality().equals(defined, db.applied), isTrue);
+    expect(eq.equals(defined, db.applied), isTrue);
   });
 
   test("Multiple migrations", () {
@@ -31,11 +32,11 @@ void main() {
       Migration(definedAt: DateTime(2025, 3, 7), up: null, down: null),
       Migration(definedAt: DateTime(2025, 3, 8), up: null, down: null),
     ];
-    final db = MockDatabase();
+    final db = MockDatabase<void>();
 
     migrator.call(db: db, defined: defined.iterator);
 
-    expect(IterableEquality().equals(defined, db.applied), isTrue);
+    expect(eq.equals(defined, db.applied), isTrue);
   });
 
   test("Wrong order throws", () {
@@ -44,7 +45,7 @@ void main() {
       Migration(definedAt: DateTime(2025, 3, 7), up: null, down: null),
       Migration(definedAt: DateTime(2025, 3, 5), up: null, down: null),
     ];
-    final db = MockDatabase();
+    final db = MockDatabase<void>();
 
     expect(() => migrator.call(db: db, defined: defined.iterator), throwsA(isA<StateError>()));
 
@@ -78,6 +79,6 @@ void main() {
 
     SyncMigrator<Null>().call(db: db, defined: defined.iterator);
 
-    expect(IterableEquality().equals(db.applied, defined), isTrue);
+    expect(eq.equals(db.applied, defined), isTrue);
   });
 }
