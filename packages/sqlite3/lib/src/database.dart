@@ -1,10 +1,9 @@
-import 'package:db_migrations_with_multiverse_timetravel/db_migrations_with_multiverse_timetravel.dart'
-    as multiverse;
-import 'package:db_migrations_with_multiverse_timetravel/db_migrations_with_multiverse_timetravel.dart'
-    hide Database, AsyncDatabase;
+import 'package:db_migrations_with_multiverse_timetravel/db_migrations_with_multiverse_timetravel.dart';
 import 'package:sqlite3/sqlite3.dart';
 
-class Sqlite3Database implements multiverse.Database<String> {
+/// A [SyncDatabase] implementation for SQLite3.
+class Sqlite3Database implements SyncDatabase<String> {
+  /// Creates a new [Sqlite3Database] instance.
   const Sqlite3Database(this._db);
 
   final Database _db;
@@ -82,5 +81,20 @@ class Sqlite3Database implements multiverse.Database<String> {
   @override
   void performMigration(String migration) {
     _db.execute(migration);
+  }
+  
+  @override
+  void beginTransaction() {
+    _db.execute('BEGIN TRANSACTION');
+  }
+  
+  @override
+  void commitTransaction() {
+    _db.execute('COMMIT TRANSACTION');
+  }
+  
+  @override
+  void rollbackTransaction() {
+    _db.execute('ROLLBACK TRANSACTION');
   }
 }

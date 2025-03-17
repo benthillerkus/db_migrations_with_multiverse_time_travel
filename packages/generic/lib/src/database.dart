@@ -1,47 +1,86 @@
+import 'dart:async';
+
 import 'migration.dart';
 
-abstract interface class Database<T> {
+/// A database that can store and apply migrations.
+/// 
+/// The type parameter [T] is the type of the [Migration].
+/// 
+/// Implementations of this class should wrap a database library.
+abstract interface class SyncDatabase<T> {
+  /// {@template dmwmt.database.initializeMigrationsTable}
   /// Creates a table in the database that can store migrations.
+  /// {@endtemplate}
   void initializeMigrationsTable();
 
+  /// {@template dmwmt.database.isMigrationsTableInitialized}
   /// Checks if the migrations table has been initialized.
+  /// {@endtemplate}
   bool isMigrationsTableInitialized();
 
+  /// {@template dmwmt.database.retrieveAllMigrations}
   /// Reads all migrations stored in the database.
   ///
   /// The migrations are returned in the order they were defined.
+  /// {@endtemplate}
   Iterator<Migration<T>> retrieveAllMigrations();
 
+  /// {@template dmwmt.database.storeMigrations}
   /// Writes a migration to the database.
+  /// {@endtemplate}
   void storeMigrations(List<Migration<T>> migrations);
 
+  /// {@template dmwmt.database.removeMigrations}
   /// Removes a migration from the database.
+  /// {@endtemplate}
   void removeMigrations(List<Migration<T>> migrations);
 
+  /// {@template dmwmt.database.performMigration}
   /// Applies a migration to the database.
+  /// {@endtemplate}
   void performMigration(T migration);
 
-  // TODO Transactions!
+  /// {@template dmwmt.database.beginTransaction}
+  /// Starts a transaction.
+  /// {@endtemplate}
+  void beginTransaction();
+
+  /// {@template dmwmt.database.commitTransaction}
+  /// Commits a transaction.
+  /// {@endtemplate}
+  void commitTransaction();
+
+  /// {@template dmwmt.database.rollbackTransaction}
+  /// Rolls back a transaction.
+  /// {@endtemplate}
+  void rollbackTransaction();
 }
 
 abstract interface class AsyncDatabase<T> {
-  /// Creates a table in the database that can store migrations.
+  /// {@macro dmwmt.database.initializeMigrationsTable}
   Future<void> initializeMigrationsTable();
 
-  /// Checks if the migrations table has been initialized.
+  /// {@macro dmwmt.database.isMigrationsTableInitialized}
   Future<bool> isMigrationsTableInitialized();
 
-  /// Reads all migrations stored in the database.
-  ///
-  /// The migrations are returned in the order they were defined.
+  /// {@macro dmwmt.database.retrieveAllMigrations}
   Stream<Migration<T>> retrieveAllMigrations();
 
-  /// Writes a migration to the database.
+  /// {@macro dmwmt.database.storeMigrations}
   Future<void> storeMigration(List<Migration<T>> migrations);
 
-  /// Removes a migration from the database.
+  /// {@macro dmwmt.database.removeMigrations}
   Future<void> removeMigrations(List<Migration<T>> migrations);
 
-  /// Applies a migration to the database.
+  /// {@macro dmwmt.database.performMigration}
   Future<void> performMigration(T migration);
+
+  /// {@macro dmwmt.database.beginTransaction}
+  Future<void> beginTransaction();
+
+  /// {@macro dmwmt.database.commitTransaction}
+  Future<void> commitTransaction();
+
+  /// {@macro dmwmt.database.rollbackTransaction}
+  Future<void> rollbackTransaction();
 }

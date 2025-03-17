@@ -10,7 +10,7 @@ void main() {
     setUpLogging();
   });
 
-  final migrator = Migrator();
+  final migrator = SyncMigrator();
 
   test("Empty", () {
     migrator.call(db: MockDatabase(), defined: <Migration>[].iterator);
@@ -56,7 +56,7 @@ void main() {
       Migration(definedAt: DateTime(2025, 3, 8), up: null, down: null),
     ]);
 
-    Migrator<Null>().call(db: db, defined: <Migration<Null>>[].iterator);
+    SyncMigrator<Null>().call(db: db, defined: <Migration<Null>>[].iterator);
 
     expect(db.applied, isEmpty);
   });
@@ -73,7 +73,7 @@ void main() {
       Migration(definedAt: DateTime(2025, 3, 8), up: null, down: null),
     ]);
 
-    Migrator<Null>().call(db: db, defined: defined.iterator);
+    SyncMigrator<Null>().call(db: db, defined: defined.iterator);
 
     expect(IterableEquality().equals(db.applied, defined), isTrue);
   });

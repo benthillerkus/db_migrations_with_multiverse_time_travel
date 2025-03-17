@@ -1,9 +1,10 @@
 import 'package:db_migrations_with_multiverse_timetravel/db_migrations_with_multiverse_timetravel.dart';
 import 'package:logging/logging.dart';
 
-class MockDatabase<T> implements Database<T> {
+class MockDatabase<T> implements SyncDatabase<T> {
   MockDatabase([List<Migration<T>>? applied])
     : applied = applied ?? List.empty(growable: true),
+      appliedForRollback = List.empty(growable: true),
       log = Logger('db.mock');
 
   final List<Migration<T>> applied;
@@ -38,5 +39,25 @@ class MockDatabase<T> implements Database<T> {
         throw StateError('migration could not be removed: not found in database');
       }
     }
+  }
+
+  final List<Migration<T>> appliedForRollback;
+
+  @override
+  void beginTransaction() {
+    appliedForRollback.clear();
+    appliedForRollback.addAll(applied);
+  }
+
+  @override
+  void commitTransaction() {
+    appliedForRollback.clear();
+  }
+
+  @override
+  void rollbackTransaction() {
+    applied.clear();
+    applied.addAll(appliedForRollback);
+    appliedForRollback.clear();
   }
 }

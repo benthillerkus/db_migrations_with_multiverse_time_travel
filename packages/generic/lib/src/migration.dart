@@ -1,4 +1,13 @@
+/// A change to the database that can be applied and rolled back.
+/// 
+/// A migration is implemented as a simple data class that uses [definedAt] as the primary key.
+///
+/// Migrations have to be serialized and deserialized preserving atleast [definedAt] and [down]
+/// to be able to make [SyncMigrator] work.
 class Migration<T> implements Comparable<Migration<T>> {
+  /// Creates a new migration data class instance.
+  /// 
+  /// Make sure that [definedAt] is unique for each migration and represents the time the code was edited.
   Migration({
     required DateTime definedAt,
     this.name,
@@ -49,6 +58,7 @@ class Migration<T> implements Comparable<Migration<T>> {
     return 'Migration{definedAt: $definedAt, name: $name, decription: $description, appliedAt: $appliedAt, up: $up, down: $down}';
   }
 
+  /// A human-readable identifier for the migration. Used for debugging and logging.
   String get humanReadableId => name ?? definedAt.toString();
 
   @override
@@ -66,18 +76,22 @@ class Migration<T> implements Comparable<Migration<T>> {
     return definedAt.compareTo(other.definedAt);
   }
 
+  /// Find out if this migration was defined before [other].
   bool operator <(Migration<T> other) {
     return definedAt.isBefore(other.definedAt);
   }
 
+  /// Find out if this migration was defined after [other].
   bool operator >(Migration<T> other) {
     return definedAt.isAfter(other.definedAt);
   }
 
+  /// Find out if this migration was defined before or at the same time as [other].
   bool operator <=(Migration<T> other) {
     return definedAt.isBefore(other.definedAt) || definedAt.isAtSameMomentAs(other.definedAt);
   }
 
+  /// Find out if this migration was defined after or at the same time as [other].
   bool operator >=(Migration<T> other) {
     return definedAt.isAfter(other.definedAt) || definedAt.isAtSameMomentAs(other.definedAt);
   }

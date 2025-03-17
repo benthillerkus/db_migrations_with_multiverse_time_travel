@@ -1,27 +1,28 @@
-import 'migration.dart';
-import 'database.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 
+import 'database.dart';
+import 'migration.dart';
+
 /// An extension on [Database] that adds a [migrate] method.
-extension MigrateExt<T> on Database<T> {
+extension SyncMigrateExt<T> on SyncDatabase<T> {
   /// Migrates the database using the given [migrations].
   void migrate(List<Migration<T>> migrations) {
-    Migrator<T>()(db: this, defined: migrations.iterator);
+    SyncMigrator<T>()(db: this, defined: migrations.iterator);
   }
 }
 
 /// A migrator that applies and rolls back migrations.
-/// 
+///
 /// Use [call] to perform a schema update.
 // Unfortunatly this ended up being an object instead of a function
 // but this made it easier to test
-class Migrator<T> {
-  /// Creates a new [Migrator] with an optional [logger].
-  /// 
+class SyncMigrator<T> {
+  /// Creates a new [SyncMigrator] with an optional [logger].
+  ///
   /// The [logger] is used to log messages during the migration process.
   /// If no [Logger] is provided, a new logger named 'db.migrate' is created.
-  Migrator({Logger? logger})
+  SyncMigrator({Logger? logger})
     : log = logger ?? Logger('db.migrate'),
       _hasDefined = false,
       _hasApplied = false,
@@ -34,7 +35,7 @@ class Migrator<T> {
   /// Defaults to a logger named 'db.migrate'.
   final Logger log;
 
-  /// A guard to prevent the [Migrator] from being used concurrently.
+  /// A guard to prevent the [SyncMigrator] from being used concurrently.
   bool _working;
 
   /// Whether the migrator is currently working.
@@ -43,7 +44,7 @@ class Migrator<T> {
   /// Check this property before calling [call].
   bool get working => _working;
 
-  Database<T>? _db;
+  SyncDatabase<T>? _db;
 
   /// The migrations that are defined in code.
   Iterator<Migration<T>>? _defined;
@@ -97,30 +98,38 @@ class Migrator<T> {
   /// Throws a [StateError] the [Migration]s obtained from the db are not in ascending order.
   /// Throws a [ConcurrentModificationError] if the migrator is already [working].
   /// To prevent this, check [working] before calling this method.
-  void call({required Database<T> db, required Iterator<Migration<T>> defined}) {
+  void call({required SyncDatabase<T> db, required Iterator<Migration<T>> defined}) {
     initialize(db, defined);
     // [_defined] and [_applied] are moved to the first migration
 
-    findLastCommonMigration();
-    // [_defined] and [_applied] are moved to the migration after the last common migration
+    _db!.beginTransaction();
+    try {
+      findLastCommonMigration();
+      // [_defined] and [_applied] are moved to the migration after the last common migration
 
-    /// The loop is only there to be able to first rollback with [rollbackRemainingAppliedMigrations]
-    /// and then [applyRemainingDefinedMigrations] to apply the rest.
-    loop:
-    while (true) {
-      switch ((_hasDefined, _hasApplied)) {
-        case (false, false):
-          // No remaining migrations to apply or rollback.
-          // we're done
-          break loop;
-        case (true, false):
+      /// The loop is only there to be able to first rollback with [rollbackRemainingAppliedMigrations]
+      /// and then [applyRemainingDefinedMigrations] to apply the rest.
+      loop:
+      while (true) {
+        switch ((_hasDefined, _hasApplied)) {
+          case (false, false):
+            // No remaining migrations to apply or rollback.
+            // we're done
+            break loop;
+          case (true, false):
+            // [_applied] is moved to the end
+            applyRemainingDefinedMigrations();
+          // [_defined] is moved to the end
+          case (_, true):
+            rollbackRemainingAppliedMigrations();
           // [_applied] is moved to the end
-          applyRemainingDefinedMigrations();
-        // [_defined] is moved to the end
-        case (_, true):
-          rollbackRemainingAppliedMigrations();
-        // [_applied] is moved to the end
+        }
       }
+
+      _db!.commitTransaction();
+    } catch (e) {
+      _db!.rollbackTransaction();
+      rethrow;
     }
 
     log.fine('migration complete');
@@ -132,7 +141,7 @@ class Migrator<T> {
   ///
   /// Throws a [ConcurrentModificationError] if the migrator is already [working].
   @visibleForTesting
-  void initialize(Database<T> db, Iterator<Migration<T>> defined) {
+  void initialize(SyncDatabase<T> db, Iterator<Migration<T>> defined) {
     log.finer('initializing migrator...');
     if (_working) {
       throw ConcurrentModificationError(this);
@@ -175,9 +184,9 @@ class Migrator<T> {
   }
 
   /// Rollback all incoming [_applied] migrations.
-  /// 
+  ///
   /// This is done in reverse order: the last applied [Migration] is rolled back first.
-  /// 
+  ///
   /// The migrations are then removed from the migrations table in the [Database].
   @visibleForTesting
   void rollbackRemainingAppliedMigrations() {
@@ -200,9 +209,9 @@ class Migrator<T> {
   }
 
   /// Apply all remaining defined migrations.
-  /// 
+  ///
   /// The migrations are applied in order: the first defined [Migration] is applied first.
-  /// 
+  ///
   /// The migrations are then added to the migrations table in the [Database].
   @visibleForTesting
   void applyRemainingDefinedMigrations() {
