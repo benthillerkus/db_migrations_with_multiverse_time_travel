@@ -44,11 +44,38 @@ _In general, when working with a central database, down migrations are probably 
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+Using [sqlite3](https://pub.dev/packages/sqlite3) and [sqlite3_migrations_with_multiverse_timetravel](sqlite3_migrations_with_multiverse_timetravel):
+```dart
+final migrations = [
+  Migration(
+    definedAt: DateTime(2025, 3, 14, 1),
+    up: """
+create table users (
+  id integer primary key autoincrement,
+  name text not null
+);
+
+insert into users (name) values ('Alice');
+insert into users (name) values ('Bob');
+""",
+    down: """
+drop table users;
+""",
+  ),
+]
+
+Sqlite3Database(db).migrate(migrations);
+```
+
+Else, if there is no pre-made adapter for you database package of preference:
 
 ```dart
-const like = 'sample';
+class MyDatabase implements SyncDatabase {
+  ...
+}
+
+final myDatabase = MyDatabase();
+final migrator = SyncMigrator()(db: myDatabase, defined: migrations);
 ```
 
 ### What to do when there are two incompatible migrations on different branches?
