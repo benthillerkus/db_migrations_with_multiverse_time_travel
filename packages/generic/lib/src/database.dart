@@ -2,11 +2,15 @@ import 'dart:async';
 
 import 'migration.dart';
 
+/// {@template dmwmt.database}
 /// A database that can store and apply migrations.
-/// 
+///
 /// The type parameter [T] is the type of the [Migration].
-/// 
+///
 /// Implementations of this class should wrap a database library.
+/// {@endtemplate}
+///
+/// This is used for synchronous databases. For asynchronous databases, use [AsyncDatabase].
 abstract interface class SyncDatabase<T> {
   /// {@template dmwmt.database.initializeMigrationsTable}
   /// Creates a table in the database that can store migrations.
@@ -56,6 +60,9 @@ abstract interface class SyncDatabase<T> {
   void rollbackTransaction();
 }
 
+/// {@macro dmwmt.database}
+///
+/// This is used for asynchronous databases. For synchronous databases, use [SyncDatabase].
 abstract interface class AsyncDatabase<T> {
   /// {@macro dmwmt.database.initializeMigrationsTable}
   Future<void> initializeMigrationsTable();
