@@ -1,3 +1,6 @@
+![Pub Version](https://img.shields.io/pub/v/db_migrations_with_multiverse_timetravel?label=pub%3A%20db_migrations_with_multiverse_timetravel)
+![Pub Version](https://img.shields.io/pub/v/sqlite3_migrations_with_multiverse_timetravel?label=pub%3A%20sqlite3_migrations_with_multiverse_timetravel)
+
 # Db Migrations with Multiverse Timetravel
 
 Runs database migrations for apps with local / embedded databases like SQLite.
