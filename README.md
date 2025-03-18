@@ -23,7 +23,7 @@ It is therefore agnostic to which database package you're using underneath.
 ## How does it do that?
 
 The developer (you) defines migrations that update the database inside of their app code.
-Whenever a new change is made, a new migration is being defined.
+Whenever you want a change in the db, you define a new migration.
 
 When a user starts the app, all migrations are being run in sequence.
 If the user already had an older version of the app installed, only the migrations that have been defined in the app code since that older version of the app released are being run.
@@ -128,12 +128,93 @@ stateDiagram-v2
 
 Continuing from the example above, eventually branch `a` will be merged into `main`. This doesn't require any further intervention.
 
+```mermaid
+gitGraph
+   commit
+   branch a
+   commit
+   checkout main
+   branch b
+   commit
+   checkout main
+   merge a
+```
+
 Now we want to merge `b` into `main`. If `b` touches different tables than `a` did you can just proceed.
 
+<details>
+<summary>Show</summary>
+```mermaid
+gitGraph
+   commit
+   branch a
+   commit
+   checkout main
+   branch b
+   commit
+   checkout main
+   merge a
+   merge b
+```
+
+</details>
+
 If there are potential conflicts, like if one migration renamed a column and the other migration added a foreign key referencing that column, you will have to deal with that conflict:
+
+```dart
+final a = Migration(
+  name: "add users table",
+  definedAt: DateTime.utc(2025, 3, 18, 1),
+  up: "alter table users rename column 'name' to 'handle'",
+  down: "alter table users rename column 'handle' to 'name'"
+)
+
+final b = Migration(
+  name: "add author to posts",
+  definedAt: DateTime.utc(2025, 3, 18, 1),
+  up: "alter table posts add column 'author' string references users(name)",
+  down: "alter table users drop column 'author'"
+);
+```
 
 First merge `main` into `b`.
 Then update the migrations for `b` to be compatible with `main` and update the `definedAt` field. You can now merge `b` into `main`.
 
+<details>
+<summary>Show</summary>
+
+```mermaid
+gitGraph
+   commit
+   branch a
+   commit
+   checkout main
+   branch b
+   commit
+   checkout main
+   merge a
+   checkout b
+   merge main
+   checkout main
+   merge b
+```
+
+```dart
+final b = Migration(
+  name: "add author to posts",
+  definedAt: DateTime.utc(2025, 3, 21, 1), // sometime later
+  up: "alter table posts add column 'author' string references users(name)",
+  down: "alter table users drop column 'author'"
+);
+```
+
+</details>
+
 If the database had the old migrations by `b`, but is now being driven by the code on `main`, after `a` and `b` had been merged into it, _Db Migrations with Multiverse Timetravel_ would see that the database has migrations applied that the app code doesn't know about and would then migrate these down until the database is at a migration the app code knows of. It can then run the remaining up migrations inside the app code.
 
+```mermaid
+stateDiagram-v2
+    direction LR
+    b --> main: Runs down migrations
+    main --> [*]: Runs defined up migrations
+```
