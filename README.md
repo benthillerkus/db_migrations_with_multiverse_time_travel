@@ -3,6 +3,17 @@
 Runs database migrations for apps with local / embedded databases like SQLite.
 Helps with checking out different branches during development by storing the instructions to run down migrations alongside the data in the db.
 
+## Table of Contents
+
+- [What does this package do?](#what-does-this-package-do)
+- [How does it do that?](#how-does-it-do-that)
+- [What differentiates this package?](#what-differentiates-this-package)
+- [When should I not use this package?](#when-should-i-not-use-this-package)
+- [Usage](#usage)
+- [Handling Branch Migrations](#handling-branch-migrations)
+  - [Switching between branches](#switching-between-branches)
+  - [Merging branches with diverging history](#merging-branches-with-diverging-history)
+
 ## QA
 
 ### What does this package do?
@@ -30,7 +41,10 @@ But what happens when you now want to go back to the main branch or check out a 
 
 The app code doesn't know would not know the state that the database is in. And it doesn't know how to bring it back into a state in which it can work with the database again.
 
-_Db Migrations with Multiverse Timetravel_ addresses that problem by storing the information required to downgrade the database (like SQL code) inside of the database itself. So when it can first migrate the database back to a state that the app code knows how to work with. And then use the app code to run the remaining migrations.
+> [!IMPORTANT]
+> _Db Migrations with Multiverse Timetravel_ addresses that problem by storing the information required to downgrade the database (like SQL code) inside of the database itself.
+> 
+> So it can first migrate the database back to a state that the app code knows how to work with. And then use the app code to run the remaining migrations.
 
 ### When should I not use this package?
 
@@ -40,7 +54,12 @@ You should **not** use this for live databases (perhaps running on a server) tha
 
 The strategy for migrations employed by this package lets the app code drive the database version. This cannot go well when there are a two clients with different versions trying to work with the database.
 
-_In general, when working with a central database, down migrations are probably not what you are looking for. Imagine you made a mistake in your up migration -- what's the likelihood that your down migration is still correct? Could it not bring your database into an undefined state? Rollback and roll forward are more appropriate solutions here._
+> [!NOTE]
+> In general, when working with a central database, down migrations are probably not what you are looking for.
+>
+> Imagine you made a mistake in your up migration -- what's the likelihood that your down migration is still correct?
+> Could it not bring your database into an undefined state?
+> Rollback and roll forward are more appropriate solutions here.
 
 ## Usage
 
