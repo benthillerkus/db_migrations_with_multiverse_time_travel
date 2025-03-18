@@ -30,21 +30,22 @@ class Sqlite3Database implements SyncDatabase<String> {
 
   @override
   Iterator<Migration<String>> retrieveAllMigrations() {
-    return _db.select('''SELECT * FROM migrations ORDER BY defined_at ASC''').rows.map((row) {
-      final [definedAt, name, description, appliedAt, up, down] = row;
+    return _db
+        .select('''SELECT * FROM migrations ORDER BY defined_at ASC''')
+        .rows
+        .map((row) {
+          final [definedAt, name, description, appliedAt, up, down] = row;
 
-      return Migration<String>(
-        definedAt: DateTime.fromMillisecondsSinceEpoch(definedAt as int, isUtc: true),
-        name: name as String?,
-        description: description as String?,
-        appliedAt:
-            appliedAt == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(appliedAt as int, isUtc: true),
-        up: up as String,
-        down: down as String,
-      );
-    }).iterator;
+          return Migration<String>(
+            definedAt: DateTime.fromMillisecondsSinceEpoch(definedAt as int, isUtc: true),
+            name: name as String?,
+            description: description as String?,
+            appliedAt: appliedAt == null ? null : DateTime.fromMillisecondsSinceEpoch(appliedAt as int, isUtc: true),
+            up: up as String,
+            down: down as String,
+          );
+        })
+        .iterator;
   }
 
   @override
@@ -82,17 +83,17 @@ class Sqlite3Database implements SyncDatabase<String> {
   void performMigration(String migration) {
     _db.execute(migration);
   }
-  
+
   @override
   void beginTransaction() {
     _db.execute('BEGIN TRANSACTION');
   }
-  
+
   @override
   void commitTransaction() {
     _db.execute('COMMIT TRANSACTION');
   }
-  
+
   @override
   void rollbackTransaction() {
     _db.execute('ROLLBACK TRANSACTION');

@@ -3,9 +3,9 @@ import 'package:logging/logging.dart';
 
 class MockDatabase<T> implements SyncDatabase<T> {
   MockDatabase([List<Migration<T>>? applied])
-    : applied = applied ?? List.empty(growable: true),
-      appliedForRollback = List.empty(growable: true),
-      log = Logger('db.mock');
+      : applied = applied ?? List.empty(growable: true),
+        appliedForRollback = List.empty(growable: true),
+        log = Logger('db.mock');
 
   final List<Migration<T>> applied;
   final Logger log;

@@ -18,16 +18,17 @@ class Migration<T> implements Comparable<Migration<T>> {
     required this.up,
     required this.down,
   }) : // Ensures that the DateTime is in UTC and also truncates the microseconds,
-       // so that it's not a problem if microsecond precision is not supported by the database.
-       definedAt = DateTime.fromMillisecondsSinceEpoch(
-         (() {
-           if (!definedAt.isUtc) {
-             throw ArgumentError.value(definedAt, 'definedAt', 'must be in UTC');
-           }
-           return definedAt;
-         })().millisecondsSinceEpoch,
-         isUtc: true,
-       );
+        // so that it's not a problem if microsecond precision is not supported by the database.
+        definedAt = DateTime.fromMillisecondsSinceEpoch(
+          (() {
+            if (!definedAt.isUtc) {
+              throw ArgumentError.value(definedAt, 'definedAt', 'must be in UTC');
+            }
+            return definedAt;
+          })()
+              .millisecondsSinceEpoch,
+          isUtc: true,
+        );
 
   /// The identity of the migration.
   ///
@@ -71,9 +72,7 @@ class Migration<T> implements Comparable<Migration<T>> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Migration &&
-          runtimeType == other.runtimeType &&
-          definedAt.isAtSameMomentAs(other.definedAt);
+      other is Migration && runtimeType == other.runtimeType && definedAt.isAtSameMomentAs(other.definedAt);
 
   @override
   int get hashCode => definedAt.hashCode;

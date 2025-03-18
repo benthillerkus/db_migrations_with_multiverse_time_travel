@@ -23,9 +23,10 @@ class SyncMigrator<T> {
   /// The [logger] is used to log messages during the migration process.
   /// If no [Logger] is provided, a new logger named 'db.migrate' is created.
   SyncMigrator({Logger? logger})
-    : log = logger ?? Logger('db.migrate'),
-      _hasDefined = false,
-      _hasApplied = false;
+      : log = logger ?? Logger('db.migrate'),
+        _hasDefined = false,
+        _hasApplied = false;
+
   /// The logger used during migrations.
   ///
   /// Conforms to the [Logger] class from the `logging` package.
@@ -182,8 +183,7 @@ class SyncMigrator<T> {
       return;
     }
 
-    final toRollback =
-        [for (; _hasApplied; _moveNextApplied()) _applied!.current].reversed.toList();
+    final toRollback = [for (; _hasApplied; _moveNextApplied()) _applied!.current].reversed.toList();
 
     for (final migration in toRollback) {
       log.finer('|_ - migration ${migration.humanReadableId}');
