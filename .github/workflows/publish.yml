@@ -13,10 +13,14 @@ jobs:
     permissions:
       id-token: write # Required for authentication using OIDC
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+
       - name: Set up environment
         run: echo "PACKAGE_NAME=$(echo ${{ github.ref_name }} | grep -o '^[a-z0-9]+')" >> $GITHUB_ENV
 
-      - name: Publish package
-        uses: dart-lang/setup-dart/.github/actions/publish-package@v1
-        with:
-          working-directory: packages/${{ env.PACKAGE_NAME }}
+      - name: Publish
+        run: |
+          cd packages/${{ env.PACKAGE_NAME }}
+          dart pub publish --force
