@@ -1,11 +1,10 @@
 import 'dart:ffi';
 
 import 'package:collection/collection.dart';
-import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:logging/logging.dart';
 import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:sqlite3_migrations_with_multiverse_time_travel/src/database.dart';
+import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migrations_with_multiverse_time_travel.dart';
 import 'package:test/test.dart';
 
 extension<T> on Iterator<T> {
@@ -60,12 +59,11 @@ void main() {
       log.info("Running the app, some data is inserted");
       db.execute("insert into users (name) values ('Alice'), ('Bob'), ('Steward'), ('Mallory');");
 
-      final users =
-          db
-              .select("select name from users order by identifier asc")
-              .map((row) => row.values.first)
-              .cast<String>()
-              .toList();
+      final users = db
+          .select("select name from users order by identifier asc")
+          .map((row) => row.values.first)
+          .cast<String>()
+          .toList();
 
       expect(users, ['Alice', 'Bob', 'Steward', 'Mallory']);
 
@@ -156,12 +154,11 @@ void main() {
       db.execute("insert into posts (user_id, content) values (1, 'Hello, World!'), (2, 'Hi!');");
       db.execute("update posts set likes = 42 where id = 1;");
 
-      final posts =
-          db
-              .select("select content, likes from posts order by id asc")
-              .map((row) => row.values)
-              .cast<List<dynamic>>()
-              .toList();
+      final posts = db
+          .select("select content, likes from posts order by id asc")
+          .map((row) => row.values)
+          .cast<List<dynamic>>()
+          .toList();
 
       expect(posts, [
         ['Hello, World!', 42],
