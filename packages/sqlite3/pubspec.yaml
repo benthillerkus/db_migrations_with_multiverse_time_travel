@@ -6,7 +6,7 @@ issue_tracker: https://github.com/benthillerkus/db_migrations_with_multiverse_ti
 topics: ["database", "migration", "sqlite"]
 
 environment:
-  sdk: ">=3.7.0-323.0.dev <4.0.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 resolution: workspace
 
