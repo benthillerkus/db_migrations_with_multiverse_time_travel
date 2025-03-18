@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'README.md'
+    branches:
+      - main
 
 jobs:
   copy-readme:
