@@ -1,9 +1,9 @@
 import 'dart:ffi';
 
-import 'package:db_migrations_with_multiverse_timetravel/db_migrations_with_multiverse_timetravel.dart';
+import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:sqlite3_migrations_with_multiverse_timetravel/sqlite3_migrations_with_multiverse_timetravel.dart';
+import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migrations_with_multiverse_time_travel.dart';
 
 final migrations = [
   Migration(

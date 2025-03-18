@@ -1,5 +1,5 @@
 import 'package:collection/collection.dart';
-import 'package:db_migrations_with_multiverse_timetravel/db_migrations_with_multiverse_timetravel.dart';
+import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:test/test.dart';
 
 import 'logging.dart';

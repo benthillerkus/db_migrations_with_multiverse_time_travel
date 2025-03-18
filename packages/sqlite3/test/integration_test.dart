@@ -1,12 +1,12 @@
 import 'dart:ffi';
 
-import 'package:db_migrations_with_multiverse_timetravel/db_migrations_with_multiverse_timetravel.dart';
+import 'package:collection/collection.dart';
+import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:logging/logging.dart';
 import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
-import 'package:sqlite3_migrations_with_multiverse_timetravel/src/database.dart';
+import 'package:sqlite3_migrations_with_multiverse_time_travel/src/database.dart';
 import 'package:test/test.dart';
-import 'package:collection/collection.dart';
 
 extension<T> on Iterator<T> {
   List<T> toList() => [for (; moveNext();) current];

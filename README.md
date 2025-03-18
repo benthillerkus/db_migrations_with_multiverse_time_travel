@@ -1,7 +1,7 @@
-![Pub Version](https://img.shields.io/pub/v/db_migrations_with_multiverse_timetravel?label=pub%3A%20db_migrations_with_multiverse_timetravel)
-![Pub Version](https://img.shields.io/pub/v/sqlite3_migrations_with_multiverse_timetravel?label=pub%3A%20sqlite3_migrations_with_multiverse_timetravel)
+![Pub Version](https://img.shields.io/pub/v/db_migrations_with_multiverse_time_travel?label=pub%3A%20db_migrations_with_multiverse_time_travel)
+![Pub Version](https://img.shields.io/pub/v/sqlite3_migrations_with_multiverse_time_travel?label=pub%3A%20sqlite3_migrations_with_multiverse_time_travel)
 
-# Db Migrations with Multiverse Timetravel
+# Db Migrations with Multiverse time_travel
 
 Runs database migrations for apps with local / embedded databases like SQLite.
 Enables you to check out feature branches during development without resetting your database.
@@ -70,7 +70,7 @@ stateDiagram-v2
 
 ## What differentiates this package?
 
-_Db Migrations with Multiverse Timetravel_ solves a specific problem that other packages do not address:
+_Db Migrations with Multiverse time_travel_ solves a specific problem that other packages do not address:
 
 During development, there will be multiple branches of your app code. And some branches may introduce changes to the database.
 At first this is fine, the app code will automatically run the up migration when you check out a feature branch with a change to the db and you can just work.
@@ -80,13 +80,13 @@ At first this is fine, the app code will automatically run the up migration when
 The app code doesn't know the state that the database is in. And it doesn't know how to bring it back into a state in which it can work with the database again.
 
 > [!IMPORTANT]
-> _Db Migrations with Multiverse Timetravel_ addresses that problem by storing the information required to downgrade the database (like SQL code) inside of the database itself.
+> _Db Migrations with Multiverse time_travel_ addresses that problem by storing the information required to downgrade the database (like SQL code) inside of the database itself.
 > 
 > So it can first migrate the database back to a state that the app code knows how to work with. And then use the app code to run the remaining migrations.
 
 ## When should I not use this package?
 
-You should **only** use _Db Migrations with Multiverse Timetravel_ when working with app/embedded/edge databases. That is databases that are only being accessed by a single instance of your app code.
+You should **only** use _Db Migrations with Multiverse time_travel_ when working with app/embedded/edge databases. That is databases that are only being accessed by a single instance of your app code.
 
 You should **not** use this for live databases (perhaps running on a server[^1]) that are being accessed by multiple clients.
 
@@ -100,7 +100,7 @@ https://atlasgo.io/blog/2024/04/01/migrate-down, https://antman-does-software.co
 
 ## Usage
 
-Using [sqlite3](https://pub.dev/packages/sqlite3) and [sqlite3_migrations_with_multiverse_timetravel](sqlite3_migrations_with_multiverse_timetravel):
+Using [sqlite3](https://pub.dev/packages/sqlite3) and [sqlite3_migrations_with_multiverse_time_travel](sqlite3_migrations_with_multiverse_time_travel):
 ```dart
 final migrations = [
   Migration(
@@ -249,7 +249,7 @@ final b = Migration(
 
 </details>
 
-If the database had the old migrations by `b`, but is now being driven by the code on `main`, after `a` and `b` had been merged into it, _Db Migrations with Multiverse Timetravel_ would see that the database has migrations applied that the app code doesn't know about and would then migrate these down until the database is at a migration the app code knows of. It can then run the remaining up migrations inside the app code.
+If the database had the old migrations by `b`, but is now being driven by the code on `main`, after `a` and `b` had been merged into it, _Db Migrations with Multiverse time_travel_ would see that the database has migrations applied that the app code doesn't know about and would then migrate these down until the database is at a migration the app code knows of. It can then run the remaining up migrations inside the app code.
 
 ```mermaid
 stateDiagram-v2
