@@ -12,10 +12,10 @@ jobs:
     uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
     with:
       steps:
-        - name: Set up environment
+      - name: Set up environment
         run: echo "PACKAGE_NAME=$(echo ${{ github.ref_name }} | grep -o '^[a-z]\+')" >> $GITHUB_ENV
 
-        - name: Publish package
+      - name: Publish package
         uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
         with:
           working-directory: packages/${{ env.PACKAGE_NAME }}
