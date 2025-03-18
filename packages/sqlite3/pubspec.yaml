@@ -1,5 +1,5 @@
 name: sqlite3_migrations_with_multiverse_time_travel
-description: A starting point for Dart libraries or applications.
+description: Runs database migrations for apps using sqlite3. Helps with checking out different branches during development by storing the instructions to run down migrations alongside the data in the db.
 version: 1.0.0
 repository: https://github.com/benthillerkus/db_migrations_with_multiverse_time_travel
 issue_tracker: https://github.com/benthillerkus/db_migrations_with_multiverse_time_travel/issues
