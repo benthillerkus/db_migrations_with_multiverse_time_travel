@@ -1,12 +1,12 @@
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
-import 'package:sqlite3/sqlite3.dart';
+import 'package:sqlite3/common.dart';
 
 /// A [SyncDatabase] implementation for SQLite3.
 class Sqlite3Database implements SyncDatabase<String> {
   /// Creates a new [Sqlite3Database] instance.
   const Sqlite3Database(this._db);
 
-  final Database _db;
+  final CommonDatabase _db;
 
   @override
   void initializeMigrationsTable() {
