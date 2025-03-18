@@ -1,7 +1,7 @@
 ![Pub Version](https://img.shields.io/pub/v/db_migrations_with_multiverse_time_travel?label=pub%3A%20db_migrations_with_multiverse_time_travel)
 ![Pub Version](https://img.shields.io/pub/v/sqlite3_migrations_with_multiverse_time_travel?label=pub%3A%20sqlite3_migrations_with_multiverse_time_travel)
 
-# Db Migrations with Multiverse time_travel
+# Db Migrations with Multiverse Time Travel
 
 Runs database migrations for apps with local / embedded databases like SQLite.
 Enables you to check out feature branches during development without resetting your database.
@@ -249,7 +249,7 @@ final b = Migration(
 
 </details>
 
-If the database had the old migrations by `b`, but is now being driven by the code on `main`, after `a` and `b` had been merged into it, _Db Migrations with Multiverse time_travel_ would see that the database has migrations applied that the app code doesn't know about and would then migrate these down until the database is at a migration the app code knows of. It can then run the remaining up migrations inside the app code.
+If the database had the old migrations by `b`, but is now being driven by the code on `main`, after `a` and `b` had been merged into it, _Db Migrations with Multiverse Time Travel_ would see that the database has migrations applied that the app code doesn't know about and would then migrate these down until the database is at a migration the app code knows of. It can then run the remaining up migrations inside the app code.
 
 ```mermaid
 stateDiagram-v2
