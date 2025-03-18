@@ -49,6 +49,9 @@ When a user starts the app, all migrations are being run in sequence.
 If the user already had an older version of the app installed, only the migrations that have been defined in the app code since that older version of the app released are being run.
 
 ```mermaid
+---
+title: Migration Algorithm
+---
 stateDiagram-v2
   direction LR
   state lcm <<choice>>
@@ -82,16 +85,15 @@ The app code doesn't know the state that the database is in. And it doesn't know
 
 You should **only** use _Db Migrations with Multiverse Timetravel_ when working with app/embedded/edge databases. That is databases that are only being accessed by a single instance of your app code.
 
-You should **not** use this for live databases (perhaps running on a server) that are being accessed by multiple clients.
+You should **not** use this for live databases (perhaps running on a server[^1]) that are being accessed by multiple clients.
 
 The strategy for migrations employed by this package lets the app code drive the database version. This cannot go well when there are two clients with different versions trying to work with the database.
 
-> [!NOTE]
-> In general, when working with a central database, down migrations are probably not what you are looking for.
->
-> Imagine you made a mistake in your up migration -- what's the likelihood that your down migration is still correct?
-> Could it not bring your database into an undefined state?
-> Rollback and roll forward are more appropriate solutions here.
+[^1]: In general, when working with a central database, down migrations are probably not what you are looking for.
+Imagine you made a mistake in your up migration -- what's the likelihood that your down migration is still correct?
+Could it not bring your database into an undefined state?
+Rollback and roll forward are more appropriate solutions here.
+https://atlasgo.io/blog/2024/04/01/migrate-down, https://antman-does-software.com/why-you-will-never-write-another-down-migration
 
 ## Usage
 
