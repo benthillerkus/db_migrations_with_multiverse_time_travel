@@ -25,8 +25,42 @@ It is therefore agnostic to which database package you're using underneath.
 The developer (you) defines migrations that update the database inside of their app code.
 Whenever you want a change in the db, you define a new migration.
 
+As a rough sketch:
+```dart
+late final db;
+
+void main() {
+  sqlite3.open("database.db");
+
+  Sqlite3Database(db).migrate([
+    Migration(
+      name: "add users table",
+      definedAt: DateTime.utc(2026, 4, 12, 11, 4),
+      up: "create table users",
+      down: "drop table users",
+    ),
+  ]);
+
+  runApp(MyApp.new);
+}
+```
+
 When a user starts the app, all migrations are being run in sequence.
 If the user already had an older version of the app installed, only the migrations that have been defined in the app code since that older version of the app released are being run.
+
+```mermaid
+stateDiagram-v2
+  direction LR
+  state lcm <<choice>>
+  state end <<choice>>
+  [*] --> lcm: Find last common migration
+  lcm --> rollback
+  rollback --> end: Rollback applied migrations until last common migration
+  lcm --> end: When no migrations are left in the database that aren't defined in the code
+  end --> [*]: If no defined or applied migrations remain
+  end --> apply: If only defined migrations remain
+  apply --> [*]: Apply remaining defined migrations
+```
 
 ## What differentiates this package?
 
@@ -35,7 +69,7 @@ _Db Migrations with Multiverse Timetravel_ solves a specific problem that other 
 During development, there will be multiple branches of your app code. And some branches may introduce changes to the database.
 At first this is fine, the app code will automatically run the up migration when you check out a feature branch with a change to the db and you can just work.
 
-But what happens when you now want to go back to the main branch or check out a different feature with a different change to the database?
+**But what happens when you now want to go back to the main branch or check out a different feature with a different change to the database?**
 
 The app code doesn't know the state that the database is in. And it doesn't know how to bring it back into a state in which it can work with the database again.
 
