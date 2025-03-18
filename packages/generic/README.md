@@ -136,6 +136,9 @@ final migrator = SyncMigrator()(db: myDatabase, defined: migrations);
 
 ## Handling Branch Migrations
 
+> [!NOTE]
+> To see the following example implemented in code, check out the integration test for the sqlite3 wrapper: [packages/sqlite3/test/integration_test.dart](packages/sqlite3/test/integration_test.dart)
+
 ### Switching between branches
 
 Switching between branches is always fine, because the database will first be migrated down to the point where both branches diverged and then the other branch is being taken for the up migrations.
