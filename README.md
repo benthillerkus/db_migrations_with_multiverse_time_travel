@@ -1,7 +1,7 @@
 # Db Migrations with Multiverse Timetravel
 
 Runs database migrations for apps with local / embedded databases like SQLite.
-Helps with checking out different branches during development by storing the instructions to run down migrations alongside the data in the db.
+Enables you to check out feature branches during development without resetting your database every time.
 
 ## Table of Contents
 
