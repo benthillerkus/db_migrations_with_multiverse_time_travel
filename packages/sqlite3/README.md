@@ -1,39 +1,35 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Sqlite3 Migrations with Multiverse Time Travel
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages). 
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages). 
--->
-
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
-
-## Features
-
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+This is an integration for [db_migrations_with_multiverse_time_travel](https://pub.dev/packages/db_migrations_with_multiverse_time_travel).
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
-
 ```dart
-const like = 'sample';
+import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migrations_with_multiverse_time_travel.dart';
+
+final migrations = [
+  Migration(
+    definedAt: DateTime(2025, 3, 14, 1),
+    up: """
+create table users (
+  id integer primary key autoincrement,
+  name text not null
+);
+
+insert into users (name) values ('Alice');
+insert into users (name) values ('Bob');
+""",
+    down: """
+drop table users;
+""",
+  ),
+];
+
+final db = sqlite3.openInMemory();
+
+Sqlite3Database(db).migrate(migrations);
+
+for (final row in db.select('select * from users').rows) {
+  print(row);
+}
 ```
-
-## Additional information
-
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
