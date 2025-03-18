@@ -257,3 +257,4 @@ stateDiagram-v2
     b --> main: Runs down migrations
     main --> [*]: Runs defined up migrations
 ```
+
