@@ -18,7 +18,7 @@ jobs:
       - uses: dart-lang/setup-dart@v1
 
       - name: Set up environment
-        run: echo "PACKAGE_NAME=$(echo ${{ github.ref_name }} | grep -o '^[a-z0-9]+')" >> $GITHUB_ENV
+        run: echo "PACKAGE_NAME=$(echo ${{ github.ref_name }} | grep -o '^[a-z0-9]*')" >> $GITHUB_ENV
 
       - name: Publish
         run: |
