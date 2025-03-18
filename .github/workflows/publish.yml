@@ -1,9 +1,5 @@
 name: Publish to pub.dev
 
-concurrency:
-  group: production
-  cancel-in-progress: true
-
 on:
   push:
     tags:
