@@ -100,7 +100,7 @@ https://atlasgo.io/blog/2024/04/01/migrate-down, https://antman-does-software.co
 
 ## Usage
 
-Using [sqlite3](https://pub.dev/packages/sqlite3) and [sqlite3_migrations_with_multiverse_time_travel](sqlite3_migrations_with_multiverse_time_travel):
+Using [sqlite3](https://pub.dev/packages/sqlite3) and [sqlite3_migrations_with_multiverse_time_travel](https://pub.dev/packages/sqlite3_migrations_with_multiverse_time_travel):
 ```dart
 final migrations = [
   Migration(
