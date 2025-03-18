@@ -1,5 +1,5 @@
-![Pub Version](https://img.shields.io/pub/v/db_migrations_with_multiverse_time_travel?label=pub%3A%20db_migrations_with_multiverse_time_travel)
-![Pub Version](https://img.shields.io/pub/v/sqlite3_migrations_with_multiverse_time_travel?label=pub%3A%20sqlite3_migrations_with_multiverse_time_travel)
+[![Pub Version](https://img.shields.io/pub/v/db_migrations_with_multiverse_time_travel?label=pub%3A%20db_migrations_with_multiverse_time_travel)](https://pub.dev/packages/db_migrations_with_multiverse_time_travel)
+[![Pub Version](https://img.shields.io/pub/v/sqlite3_migrations_with_multiverse_time_travel?label=pub%3A%20sqlite3_migrations_with_multiverse_time_travel)](https://pub.dev/packages/sqlite3_migrations_with_multiverse_time_travel)
 
 # Db Migrations with Multiverse Time Travel
 
