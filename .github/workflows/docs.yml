@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'README.md'
+      - 'banner.webp'
+      - 'logo.webp'
     branches:
       - main
 
@@ -19,13 +21,21 @@ jobs:
       - name: Copy README.md to packages/generic/README.md
         run: |
           cp README.md packages/generic/README.md
+          cp banner.webp packages/generic/banner.webp
+          cp logo.webp packages/generic/logo.webp
+          cp banner.webp packages/sqlite3/banner.webp
+          cp logo.webp packages/sqlite3/logo.webp
       
       - name: Commit changes
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add packages/generic/README.md
-          git commit -m "docs(README.md): sync to packages/generic/README.md"
+          git add packages/generic/banner.webp
+          git add packages/generic/logo.webp
+          git add packages/sqlite3/banner.webp
+          git add packages/sqlite3/logo.webp
+          git commit -m "docs: sync assets for documentation"
 
       - name: Push changes
         env:
