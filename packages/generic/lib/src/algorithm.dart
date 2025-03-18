@@ -25,24 +25,13 @@ class SyncMigrator<T> {
   SyncMigrator({Logger? logger})
     : log = logger ?? Logger('db.migrate'),
       _hasDefined = false,
-      _hasApplied = false,
-      _working = false;
-
+      _hasApplied = false;
   /// The logger used during migrations.
   ///
   /// Conforms to the [Logger] class from the `logging` package.
   ///
   /// Defaults to a logger named 'db.migrate'.
   final Logger log;
-
-  /// A guard to prevent the [SyncMigrator] from being used concurrently.
-  bool _working;
-
-  /// Whether the migrator is currently working.
-  ///
-  /// This is used to prevent the migrator from being used concurrently.
-  /// Check this property before calling [call].
-  bool get working => _working;
 
   SyncDatabase<T>? _db;
 
@@ -143,10 +132,6 @@ class SyncMigrator<T> {
   @visibleForTesting
   void initialize(SyncDatabase<T> db, Iterator<Migration<T>> defined) {
     log.finer('initializing migrator...');
-    if (_working) {
-      throw ConcurrentModificationError(this);
-    }
-    _working = true;
 
     _db = db;
     _defined = defined;
@@ -239,7 +224,6 @@ class SyncMigrator<T> {
     _previousDefined = null;
     _previousApplied = null;
     _db = null;
-    _working = false;
     log.finer('migrator resetted');
   }
 }
