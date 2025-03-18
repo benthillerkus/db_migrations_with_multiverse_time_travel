@@ -1,5 +1,9 @@
 name: Publish to pub.dev
 
+concurrency:
+  group: production
+  cancel-in-progress: true
+
 on:
   push:
     tags:
@@ -7,6 +11,9 @@ on:
 
 jobs:
   publish:
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency: production
     permissions:
       id-token: write # Required for authentication using OIDC
     uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
