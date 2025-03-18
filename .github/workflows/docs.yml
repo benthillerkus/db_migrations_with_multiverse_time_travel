@@ -17,8 +17,5 @@ jobs:
       - name: Copy README.md to packages/generic/README.md
         run: |
           cp README.md packages/generic/README.md
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add packages/generic/README.md
-          git commit -m 'Update packages/generic/README.md from root README.md'
-          git push
+      - name: Add & Commit
+        uses: EndBug/add-and-commit@v9.1.4
