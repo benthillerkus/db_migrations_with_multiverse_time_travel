@@ -7,7 +7,7 @@ concurrency:
 on:
   push:
     tags:
-      - '[a-z]+-[0-9]+.[0-9]+.[0-9]+*'
+      - '*-*.*.*'
 
 jobs:
   publish:
@@ -20,7 +20,7 @@ jobs:
     with:
       steps:
       - name: Set up environment
-        run: echo "PACKAGE_NAME=$(echo ${{ github.ref_name }} | grep -o '^[a-z]\+')" >> $GITHUB_ENV
+        run: echo "PACKAGE_NAME=$(echo ${{ github.ref_name }} | grep -o '^[a-z0-9]+')" >> $GITHUB_ENV
 
       - name: Publish package
         uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
