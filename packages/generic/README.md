@@ -100,8 +100,12 @@ https://atlasgo.io/blog/2024/04/01/migrate-down, https://antman-does-software.co
 
 ## Usage
 
-Using [sqlite3](https://pub.dev/packages/sqlite3) and [sqlite3_migrations_with_multiverse_time_travel](https://pub.dev/packages/sqlite3_migrations_with_multiverse_time_travel):
+If you use [sqlite3](https://pub.dev/packages/sqlite3) you can use the pre-made adapter [sqlite3_migrations_with_multiverse_time_travel](https://pub.dev/packages/sqlite3_migrations_with_multiverse_time_travel) like so:
+
 ```dart
+import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migrations_with_multiverse_time_travel.dart';
+import 'package:sqlite3/sqlite3.dart';
+
 final migrations = [
   Migration(
     definedAt: DateTime(2025, 3, 14, 1),
@@ -122,6 +126,8 @@ drop table users;
 
 Sqlite3Database(db).migrate(migrations);
 ```
+
+Adapters export everything you need, so you can just run `pub add sqlite3_migrations_with_multiverse_time_travel` and you're good to go.
 
 Else, if there is no pre-made adapter for your database package of preference:
 
