@@ -16,13 +16,11 @@ jobs:
     concurrency: production
     permissions:
       id-token: write # Required for authentication using OIDC
-    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
-    with:
-      steps:
+    steps:
       - name: Set up environment
         run: echo "PACKAGE_NAME=$(echo ${{ github.ref_name }} | grep -o '^[a-z0-9]+')" >> $GITHUB_ENV
 
       - name: Publish package
-        uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+        uses: dart-lang/setup-dart/.github/actions/publish-package@v1
         with:
           working-directory: packages/${{ env.PACKAGE_NAME }}
