@@ -1,9 +1,7 @@
 import 'dart:ffi';
 
-import 'package:collection/collection.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:file/local.dart';
-import 'package:logging/logging.dart';
 import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migrations_with_multiverse_time_travel.dart';
