@@ -12,13 +12,31 @@ on:
     branches: [ "main" ]
 
 jobs:
+  packages:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.getpackages.outputs.paths }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@v1
+
+      - id: getpackages
+        name: Run tests
+        run: |
+          echo "paths=$(dart pub workspace list --json | jq -r -c '[.packages[] | select(.name != "workspace") | .path]')" >> $GITHUB_ENV
+
   build:
+    needs: packages
     runs-on: ubuntu-latest
     permissions:
       contents: read
     strategy:
       matrix:
         dart: ['3.5.0', stable]
+        package: ${{ needs.packages.outputs.packages }}
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -33,16 +51,27 @@ jobs:
       - name: Install dependencies
         run: dart pub get
 
+      - name: Run tests
+        run: |
+          cd ${{ matrix.package }}
+          dart test
+
+  check:
+    needs: packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
 
       - name: Analyze project source
         run: dart analyze
 
-      - name: Run tests
-        run: |
-          dart pub get
-          for dir in $(dart pub workspace list --json | jq -r '.packages[] | select(.name != "workspace") | .path'); do
-            echo "Running tests in $dir"
-            (cd $dir && dart test)
-          done
