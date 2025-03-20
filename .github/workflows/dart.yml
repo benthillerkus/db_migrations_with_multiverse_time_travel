@@ -25,8 +25,7 @@ jobs:
 
       - id: getpackages
         run: |
-          paths = "dart pub workspace list --json | jq -r -c '[.packages[] | select(.name != "workspace") | .path]'"
-          echo "paths=$paths" >> "$GITHUB_OUTPUT"
+          echo "paths=$(dart pub workspace list --json | jq -r -c '[.packages[] | select(.name != "workspace") | .path]')" >> $GITHUB_OUTPUT
 
   build:
     needs: packages
