@@ -34,7 +34,7 @@ jobs:
       contents: read
     strategy:
       matrix:
-        dart: ['3.5.0', stable]
+        dart: ['3.5.4', stable]
         package: ${{ fromJson(needs.packages.outputs.packages) }}
       fail-fast: false
     steps:
