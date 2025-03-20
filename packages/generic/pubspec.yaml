@@ -5,7 +5,7 @@ repository: https://github.com/benthillerkus/db_migrations_with_multiverse_time_
 issue_tracker: https://github.com/benthillerkus/db_migrations_with_multiverse_time_travel/issues
 topics: ["database", "migration"]
 environment:
-  sdk: ">=3.5.0 <4.0.0"
+  sdk: ^3.5.0
 screenshots:
   - description: The logo featuring two arrows representing version control branches flying into a clock
     path: logo.webp
@@ -13,8 +13,8 @@ screenshots:
 resolution: workspace
 
 dependencies:
-  logging: ">=1.0.0 <2.0.0"
-  meta: ">=1.0.2 <2.0.0"
+  logging: ^1.0.0
+  meta: ^1.0.2
 
 dev_dependencies:
   ansicolor: ^2.0.3
