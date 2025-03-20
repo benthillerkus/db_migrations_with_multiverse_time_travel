@@ -26,7 +26,7 @@ jobs:
       - id: getpackages
         name: Run tests
         run: |
-          echo "paths=$(dart pub workspace list --json | jq -r -c '[.packages[] | select(.name != "workspace") | .path]')" >> $GITHUB_ENV
+          echo "paths='$(dart pub workspace list --json | jq -r -c '[.packages[] | select(.name != "workspace") | .path]')'" >> $GITHUB_ENV
 
   build:
     needs: packages
