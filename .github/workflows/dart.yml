@@ -36,7 +36,7 @@ jobs:
     strategy:
       matrix:
         dart: ['3.5.0', stable]
-        package: ${{ needs.packages.outputs.packages }}
+        package: ${{ fromJson(needs.packages.outputs.packages) }}
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -57,7 +57,6 @@ jobs:
           dart test
 
   check:
-    needs: packages
     runs-on: ubuntu-latest
     permissions:
       contents: read
