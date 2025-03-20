@@ -14,7 +14,7 @@ class Sqlite3Database implements SyncDatabase<String> {
   defined_at INTEGER PRIMARY KEY,
   name TEXT,
   description TEXT,
-  applied_at INTEGER,
+  applied_at INTEGER DEFAULT (unixepoch(current_timestamp)),
   up TEXT NOT NULL,
   down TEXT NOT NULL
 )''');
@@ -50,22 +50,36 @@ class Sqlite3Database implements SyncDatabase<String> {
 
   @override
   void storeMigrations(List<Migration<String>> migrations) {
-    final stmt = _db.prepare(
-      '''INSERT INTO migrations (defined_at, name, description, applied_at, up, down) VALUES (?, ?, ?, ?, ?, ?)''',
+    final withAppliedAt = _db.prepare(
+      "INSERT INTO migrations (defined_at, name, description, applied_at, up, down) VALUES (?, ?, ?, ?, ?, ?)",
+    );
+    final withoutAppliedAt = _db.prepare(
+      "INSERT INTO migrations (defined_at, name, description, up, down) VALUES (?, ?, ?, ?, ?)",
     );
 
     for (final migration in migrations) {
-      stmt.execute([
-        migration.definedAt.millisecondsSinceEpoch,
-        migration.name,
-        migration.description,
-        migration.appliedAt?.millisecondsSinceEpoch,
-        migration.up,
-        migration.down,
-      ]);
+      if (migration.appliedAt == null) {
+        withoutAppliedAt.execute([
+          migration.definedAt.millisecondsSinceEpoch,
+          migration.name,
+          migration.description,
+          migration.up,
+          migration.down,
+        ]);
+      } else {
+        withAppliedAt.execute([
+          migration.definedAt.millisecondsSinceEpoch,
+          migration.name,
+          migration.description,
+          migration.appliedAt!.millisecondsSinceEpoch,
+          migration.up,
+          migration.down,
+        ]);
+      }
     }
 
-    stmt.dispose();
+    withAppliedAt.dispose();
+    withoutAppliedAt.dispose();
   }
 
   @override

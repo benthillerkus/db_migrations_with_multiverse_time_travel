@@ -59,5 +59,14 @@ void main() {
         <dynamic>[],
       );
     });
+
+    test('User version', () {
+      db.userVersion = 1;
+      db.execute('BEGIN TRANSACTION');
+      db.userVersion = 2;
+      expect(db.userVersion, 2);
+      db.execute('ROLLBACK');
+      expect(db.userVersion, 1);
+    });
   });
 }

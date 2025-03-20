@@ -47,6 +47,9 @@ class Migration<T> implements Comparable<Migration<T>> {
   /// The timestamp of when this migration was applied to the database. Kept around to make debugging easier (for you).
   ///
   /// Leave this as `null` when defining a new migration in code.
+  /// 
+  /// Implementations of the algorithm or database wrappers are free to update this field
+  /// on insertion to represent the time the migration was applied.
   final DateTime? appliedAt;
 
   /// The migration to apply to the database.
@@ -68,6 +71,25 @@ class Migration<T> implements Comparable<Migration<T>> {
 
   /// A human-readable identifier for the migration. Used for debugging and logging.
   String get humanReadableId => name ?? definedAt.toString();
+
+  /// Creates a copy of this migration with the given fields replaced with new values.
+  Migration<T> copyWith({
+    DateTime? definedAt,
+    String? name,
+    String? description,
+    DateTime? appliedAt,
+    T? up,
+    T? down,
+  }) {
+    return Migration<T>(
+      definedAt: definedAt ?? this.definedAt,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      appliedAt: appliedAt ?? this.appliedAt,
+      up: up ?? this.up,
+      down: down ?? this.down,
+    );
+  }
 
   @override
   bool operator ==(Object other) =>

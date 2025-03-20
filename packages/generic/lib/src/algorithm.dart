@@ -203,8 +203,9 @@ class SyncMigrator<T> {
     log.fine('applying all remaining defined migrations');
 
     final toApply = List<Migration<T>>.empty(growable: true);
+    final now = DateTime.now().toUtc();
     while (_hasDefined) {
-      final migration = _defined!.current;
+      final migration = _defined!.current.copyWith(appliedAt: now);
       log.finer('|_ + migration ${migration.humanReadableId}');
       _db!.performMigration(migration.up);
       toApply.add(migration);

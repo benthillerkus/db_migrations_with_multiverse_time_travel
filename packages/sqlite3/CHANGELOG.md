@@ -1,6 +1,7 @@
 ## 1.0.2
 
 - Loosen various dependency constraints.
+- Automatically set `applied_at` to `current_time` if left empty
 
 ## 1.0.1
 

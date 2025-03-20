@@ -5,7 +5,7 @@ repository: https://github.com/benthillerkus/db_migrations_with_multiverse_time_
 issue_tracker: https://github.com/benthillerkus/db_migrations_with_multiverse_time_travel/issues
 topics: ["database", "migration", "sqlite"]
 environment:
-  sdk: ^3.5.0
+  sdk: ^3.5.4
 screenshots:
   - description: The logo featuring two arrows representing version control branches flying into a clock
     path: logo.webp
@@ -25,3 +25,4 @@ dev_dependencies:
   file: '>=6.0.0 <8.0.0'
   logging: ^1.0.0
   collection: ^1.17.2
+  fake_async: ^1.2.0
