@@ -24,9 +24,10 @@ jobs:
       - uses: dart-lang/setup-dart@v1
 
       - id: getpackages
-        name: Run tests
         run: |
-          echo "paths='$(dart pub workspace list --json | jq -r -c '[.packages[] | select(.name != "workspace") | .path]')'" >> $GITHUB_ENV
+          paths = dart pub workspace list --json | jq -r -c '[.packages[] | select(.name != "workspace") | .path]'
+          echo $paths
+          echo "paths=$paths" >> $GITHUB_OUTPUT
 
   build:
     needs: packages
@@ -36,7 +37,7 @@ jobs:
     strategy:
       matrix:
         dart: ['3.5.0', stable]
-        package: ${{ fromJson(needs.packages.outputs.packages) }}
+        package: ${{ needs.packages.outputs.packages }}
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
