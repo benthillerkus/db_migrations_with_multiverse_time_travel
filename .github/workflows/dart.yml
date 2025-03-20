@@ -16,10 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    strategy:
+      matrix:
+        dart: ['3.5.0', stable]
     steps:
       - uses: actions/checkout@v4
       
       - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ matrix.dart }}
 
       - name: Install sqlite3
         run: sudo apt install sqlite3 
