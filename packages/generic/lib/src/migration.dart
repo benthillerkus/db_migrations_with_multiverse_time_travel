@@ -47,7 +47,7 @@ class Migration<T> implements Comparable<Migration<T>> {
   /// The timestamp of when this migration was applied to the database. Kept around to make debugging easier (for you).
   ///
   /// Leave this as `null` when defining a new migration in code.
-  /// 
+  ///
   /// Implementations of the algorithm or database wrappers are free to update this field
   /// on insertion to represent the time the migration was applied.
   final DateTime? appliedAt;
