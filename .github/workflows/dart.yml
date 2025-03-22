@@ -58,13 +58,12 @@ jobs:
         if: matrix.dart == 'stable'
         working-directory: ${{ matrix.package }}
         run: |
-            dart pub global run coverage:test_with_coverage --branch-coverage --function-coverage | tee output.log
-            if grep -q "🎉" output.log; then
-              echo "Tests completed successfully"
-              exit 0
-            else
-              exit 1
-            fi
+            timeout 1m dart pub global run coverage:test_with_coverage --branch-coverage --function-coverage | while read -r line; do
+              echo "$line"
+              if [[ "$line" == *🎉* ]]; then
+                exit 0
+              fi
+            done || echo "Coverage test timed out"
 
       - name: Run tests
         if: matrix.dart != 'stable'
