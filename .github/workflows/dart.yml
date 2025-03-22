@@ -63,11 +63,10 @@ jobs:
               echo "$line"
               if [[ "$line" == *"🎉"* ]]; then
                 echo "Tests completed successfully"
-                pkill -P $$ dart
+                kill $(ps -ef | grep '[d]art' | awk '{print $2}')
                 exit 0
               fi
             done
-            exit 1
 
       - name: Run tests
         if: matrix.dart != 'stable'
