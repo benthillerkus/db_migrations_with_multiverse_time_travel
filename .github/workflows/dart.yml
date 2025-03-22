@@ -60,10 +60,12 @@ jobs:
         run: |
             timeout 1m dart pub global run coverage:test_with_coverage --branch-coverage --function-coverage | while read -r line; do
               echo "$line"
-              if [[ "$line" == *🎉* ]]; then
+              if [[ "$line" == *"🎉"* ]]; then
+                echo "Tests completed successfully"
                 exit 0
               fi
-            done || echo "Coverage test timed out"
+            done
+            exit 1
 
       - name: Run tests
         if: matrix.dart != 'stable'
