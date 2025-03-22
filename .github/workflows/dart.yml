@@ -30,6 +30,7 @@ jobs:
   build:
     needs: packages
     runs-on: ubuntu-latest
+    environment: test
     permissions:
       contents: read
     strategy:
@@ -50,9 +51,19 @@ jobs:
       - name: Install dependencies
         run: dart pub get
 
+      - name: Install coverage tool
+        run: dart pub global activate coverage
+
       - name: Run tests
         working-directory: ${{ matrix.package }}
-        run: dart test
+        run: dart pub global run coverage:test_with_coverage --branch-coverage --function-coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ${{ matrix.package }}/coverage
+          flags: ${{ matrix.package }}, ${{ matrix.dart }}
 
   check:
     runs-on: ubuntu-latest
