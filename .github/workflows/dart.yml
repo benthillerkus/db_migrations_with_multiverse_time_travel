@@ -52,18 +52,26 @@ jobs:
         run: dart pub get
 
       - name: Install coverage tool
+        if: matrix.dart == 'stable'
         run: dart pub global activate coverage
 
-      - name: Run tests
+      - name: Run tests with coverage
+        if: matrix.dart == 'stable'
         working-directory: ${{ matrix.package }}
         run: dart pub global run coverage:test_with_coverage --branch-coverage --function-coverage
 
+      - name: Run tests
+        if: matrix.dart != 'stable'
+        working-directory: ${{ matrix.package }}
+        run: dart test
+
       - name: Upload coverage reports to Codecov
+        if: matrix.dart == 'stable'  
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ${{ matrix.package }}/coverage
-          flags: ${{ matrix.package }}, ${{ matrix.dart }}
+          flags: ${{ matrix.package }}
 
   check:
     runs-on: ubuntu-latest
