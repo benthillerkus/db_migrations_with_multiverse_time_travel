@@ -62,7 +62,7 @@ jobs:
               echo "$line"
               if [[ "$line" == *"🎉"* ]]; then
                 echo "Tests completed successfully"
-                exit 0
+                exec exit 0
               fi
             done
             exit 1
