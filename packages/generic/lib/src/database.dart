@@ -74,7 +74,7 @@ abstract interface class AsyncDatabase<T> {
   Stream<Migration<T>> retrieveAllMigrations();
 
   /// {@macro dmwmt.database.storeMigrations}
-  Future<void> storeMigration(List<Migration<T>> migrations);
+  Future<void> storeMigrations(List<Migration<T>> migrations);
 
   /// {@macro dmwmt.database.removeMigrations}
   Future<void> removeMigrations(List<Migration<T>> migrations);

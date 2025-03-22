@@ -9,6 +9,9 @@
 		},
 		{
 			"path": "packages/sqlite3"
+		},
+		{
+			"path": "packages/sqflite"
 		}
 	],
 	"settings": {
