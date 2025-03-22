@@ -9,85 +9,92 @@ import 'migration.dart';
 ///
 /// Implementations of this class should wrap a database library.
 /// {@endtemplate}
-///
-/// This is used for synchronous databases. For asynchronous databases, use [AsyncDatabase].
-abstract interface class SyncDatabase<T> {
+abstract interface class MaybeAsyncDatabase<T> {
   /// {@template dmwmt.database.initializeMigrationsTable}
   /// Creates a table in the database that can store migrations.
   /// {@endtemplate}
-  void initializeMigrationsTable();
+  FutureOr<void> initializeMigrationsTable();
 
   /// {@template dmwmt.database.isMigrationsTableInitialized}
   /// Checks if the migrations table has been initialized.
   /// {@endtemplate}
-  bool isMigrationsTableInitialized();
+  FutureOr<bool> isMigrationsTableInitialized();
 
   /// {@template dmwmt.database.retrieveAllMigrations}
   /// Reads all migrations stored in the database.
   ///
   /// The migrations are returned in the order they were defined.
   /// {@endtemplate}
-  Iterator<Migration<T>> retrieveAllMigrations();
+  dynamic retrieveAllMigrations();
 
   /// {@template dmwmt.database.storeMigrations}
   /// Writes a migration to the database.
   /// {@endtemplate}
-  void storeMigrations(List<Migration<T>> migrations);
+  FutureOr<void> storeMigrations(List<Migration<T>> migrations);
 
   /// {@template dmwmt.database.removeMigrations}
   /// Removes a migration from the database.
   /// {@endtemplate}
-  void removeMigrations(List<Migration<T>> migrations);
+  FutureOr<void> removeMigrations(List<Migration<T>> migrations);
 
   /// {@template dmwmt.database.performMigration}
   /// Applies a migration to the database.
   /// {@endtemplate}
-  void performMigration(T migration);
+
+  FutureOr<void> performMigration(T migration);
 
   /// {@template dmwmt.database.beginTransaction}
   /// Starts a transaction.
   /// {@endtemplate}
-  void beginTransaction();
+  FutureOr<void> beginTransaction();
 
   /// {@template dmwmt.database.commitTransaction}
   /// Commits a transaction.
   /// {@endtemplate}
-  void commitTransaction();
+  FutureOr<void> commitTransaction();
 
   /// {@template dmwmt.database.rollbackTransaction}
   /// Rolls back a transaction.
   /// {@endtemplate}
+  FutureOr<void> rollbackTransaction();
+}
+
+/// {@macro dmwmt.database}
+///
+/// This is used for synchronous databases. For asynchronous databases, use [AsyncDatabase].
+abstract interface class SyncDatabase<T> implements MaybeAsyncDatabase<T> {
+  @override
+  void initializeMigrationsTable();
+
+  @override
+  bool isMigrationsTableInitialized();
+
+  @override
+  Iterator<Migration<T>> retrieveAllMigrations();
+
+  @override
+  void storeMigrations(List<Migration<T>> migrations);
+
+  @override
+  void removeMigrations(List<Migration<T>> migrations);
+
+  @override
+  void performMigration(T migration);
+
+  @override
+  void beginTransaction();
+
+  @override
+  void commitTransaction();
+
+  @override
   void rollbackTransaction();
 }
 
 /// {@macro dmwmt.database}
 ///
 /// This is used for asynchronous databases. For synchronous databases, use [SyncDatabase].
-abstract interface class AsyncDatabase<T> {
-  /// {@macro dmwmt.database.initializeMigrationsTable}
-  Future<void> initializeMigrationsTable();
-
-  /// {@macro dmwmt.database.isMigrationsTableInitialized}
-  Future<bool> isMigrationsTableInitialized();
-
-  /// {@macro dmwmt.database.retrieveAllMigrations}
+abstract interface class AsyncDatabase<T> implements MaybeAsyncDatabase<T> {
+  @override
   Stream<Migration<T>> retrieveAllMigrations();
-
-  /// {@macro dmwmt.database.storeMigrations}
-  Future<void> storeMigrations(List<Migration<T>> migrations);
-
-  /// {@macro dmwmt.database.removeMigrations}
-  Future<void> removeMigrations(List<Migration<T>> migrations);
-
-  /// {@macro dmwmt.database.performMigration}
-  Future<void> performMigration(T migration);
-
-  /// {@macro dmwmt.database.beginTransaction}
-  Future<void> beginTransaction();
-
-  /// {@macro dmwmt.database.commitTransaction}
-  Future<void> commitTransaction();
-
-  /// {@macro dmwmt.database.rollbackTransaction}
-  Future<void> rollbackTransaction();
 }

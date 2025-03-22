@@ -10,75 +10,95 @@ void main() {
     setUpLogging();
   });
 
-  final migrator = SyncMigrator<void>();
   final eq = IterableEquality<Migration<void>>();
 
-  test("Empty", () {
-    migrator.call(db: MockDatabase(), defined: <Migration<void>>[].iterator);
+  group("Sync", () {
+    final migrator = SyncMigrator<void>();
+
+    test("Empty", () {
+      migrator.call(db: SyncMockDatabase(), defined: <Migration<void>>[].iterator);
+    });
+
+    test("Single migration", () {
+      final defined = [Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null)];
+      final db = SyncMockDatabase<void>();
+
+      migrator.call(db: db, defined: defined.iterator);
+
+      expect(eq.equals(defined, db.applied), isTrue);
+    });
+
+    test("Multiple migrations", () {
+      final defined = [
+        Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
+      ];
+      final db = SyncMockDatabase<void>();
+
+      migrator.call(db: db, defined: defined.iterator);
+
+      expect(eq.equals(defined, db.applied), isTrue);
+    });
+
+    test("Wrong order throws", () {
+      final defined = [
+        Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 5), up: null, down: null),
+      ];
+      final db = SyncMockDatabase<void>();
+
+      expect(() => migrator.call(db: db, defined: defined.iterator), throwsA(isA<StateError>()));
+
+      // Ensure that the database is still empty (rollback was successful).
+      expect(db.applied, isEmpty);
+    });
+
+    test('Rollback no common', () {
+      final db = SyncMockDatabase([
+        Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
+      ]);
+
+      SyncMigrator<Null>().call(db: db, defined: <Migration<Null>>[].iterator);
+
+      expect(db.applied, isEmpty);
+    });
+
+    test('Rollback some common', () {
+      final defined = [
+        Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 9), up: null, down: null),
+      ];
+
+      final db = SyncMockDatabase([
+        Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
+      ]);
+
+      SyncMigrator<Null>().call(db: db, defined: defined.iterator);
+
+      expect(eq.equals(db.applied, defined), isTrue);
+    });
   });
 
-  test("Single migration", () {
-    final defined = [Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null)];
-    final db = MockDatabase<void>();
+  group("Async", () {
+    final migrator = AsyncMigrator<void>();
 
-    migrator.call(db: db, defined: defined.iterator);
+    test("Empty", () async {
+      await migrator.call(db: AsyncMockDatabase(), defined: <Migration<void>>[].iterator);
+    });
 
-    expect(eq.equals(defined, db.applied), isTrue);
-  });
+    test("Single migration", () async {
+      final defined = [Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null)];
+      final db = AsyncMockDatabase<void>();
 
-  test("Multiple migrations", () {
-    final defined = [
-      Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
-      Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
-      Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
-    ];
-    final db = MockDatabase<void>();
+      await migrator.call(db: db, defined: defined.iterator);
 
-    migrator.call(db: db, defined: defined.iterator);
-
-    expect(eq.equals(defined, db.applied), isTrue);
-  });
-
-  test("Wrong order throws", () {
-    final defined = [
-      Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
-      Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
-      Migration(definedAt: DateTime.utc(2025, 3, 5), up: null, down: null),
-    ];
-    final db = MockDatabase<void>();
-
-    expect(() => migrator.call(db: db, defined: defined.iterator), throwsA(isA<StateError>()));
-
-    // Ensure that the database is still empty (rollback was successful).
-    expect(db.applied, isEmpty);
-  });
-
-  test('Rollback no common', () {
-    final db = MockDatabase([
-      Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
-      Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
-      Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
-    ]);
-
-    SyncMigrator<Null>().call(db: db, defined: <Migration<Null>>[].iterator);
-
-    expect(db.applied, isEmpty);
-  });
-
-  test('Rollback some common', () {
-    final defined = [
-      Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
-      Migration(definedAt: DateTime.utc(2025, 3, 9), up: null, down: null),
-    ];
-
-    final db = MockDatabase([
-      Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
-      Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
-      Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
-    ]);
-
-    SyncMigrator<Null>().call(db: db, defined: defined.iterator);
-
-    expect(eq.equals(db.applied, defined), isTrue);
+      expect(eq.equals(defined, db.applied), isTrue);
+    });
   });
 }

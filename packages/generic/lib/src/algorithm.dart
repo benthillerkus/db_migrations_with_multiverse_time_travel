@@ -6,7 +6,7 @@ import 'package:meta/meta.dart';
 import 'database.dart';
 import 'migration.dart';
 
-/// An extension on [Database] that adds a [migrate] method.
+/// An extension on [SyncDatabase] that adds a [migrate] method.
 extension SyncMigrateExt<T> on SyncDatabase<T> {
   /// Migrates the database using the given [migrations].
   void migrate(List<Migration<T>> migrations) {
@@ -206,7 +206,7 @@ class SyncMigrator<T> {
   ///
   /// This is done in reverse order: the last applied [Migration] is rolled back first.
   ///
-  /// The migrations are then removed from the migrations table in the [Database].
+  /// The migrations are then removed from the migrations table in the [MaybeAsyncDatabase].
   /// {@endtemplate}
   @visibleForTesting
   void rollbackRemainingAppliedMigrations() {
@@ -232,7 +232,7 @@ class SyncMigrator<T> {
   ///
   /// The migrations are applied in order: the first defined [Migration] is applied first.
   ///
-  /// The migrations are then added to the migrations table in the [Database].
+  /// The migrations are then added to the migrations table in the [MaybeAsyncDatabase].
   /// {@endtemplate}
   @visibleForTesting
   void applyRemainingDefinedMigrations() {

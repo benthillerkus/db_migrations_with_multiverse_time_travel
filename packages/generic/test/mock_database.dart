@@ -1,38 +1,44 @@
+import 'dart:async';
+
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:logging/logging.dart';
 
-class MockDatabase<T> implements SyncDatabase<T> {
+class MockDatabase<T> implements MaybeAsyncDatabase<T> {
   MockDatabase([List<Migration<T>>? applied])
       : applied = applied ?? List.empty(growable: true),
         appliedForRollback = List.empty(growable: true),
+        migrationsTableInitialized = false,
         log = Logger('db.mock');
 
   final List<Migration<T>> applied;
   final Logger log;
+  bool migrationsTableInitialized;
 
   @override
-  void initializeMigrationsTable() {}
+  FutureOr<void> initializeMigrationsTable() {
+    migrationsTableInitialized = true;
+  }
 
   @override
-  bool isMigrationsTableInitialized() => true;
+  bool isMigrationsTableInitialized() => migrationsTableInitialized;
 
   @override
-  void performMigration(T migration) {
+  FutureOr<void> performMigration(T migration) {
     log.info('performing migration', migration);
   }
 
   @override
-  Iterator<Migration<T>> retrieveAllMigrations() {
+  dynamic retrieveAllMigrations() {
     return applied.iterator;
   }
 
   @override
-  void storeMigrations(List<Migration<T>> migration) {
+  FutureOr<void> storeMigrations(List<Migration<T>> migration) {
     applied.addAll(migration);
   }
 
   @override
-  void removeMigrations(List<Migration<T>> migrations) {
+  FutureOr<void> removeMigrations(List<Migration<T>> migrations) {
     for (final migration in migrations) {
       log.fine('removing migration ${migration.humanReadableId} from database...');
       if (!applied.remove(migration)) {
@@ -44,20 +50,38 @@ class MockDatabase<T> implements SyncDatabase<T> {
   final List<Migration<T>> appliedForRollback;
 
   @override
-  void beginTransaction() {
+  FutureOr<void> beginTransaction() {
     appliedForRollback.clear();
     appliedForRollback.addAll(applied);
   }
 
   @override
-  void commitTransaction() {
+  FutureOr<void> commitTransaction() {
     appliedForRollback.clear();
   }
 
   @override
-  void rollbackTransaction() {
+  FutureOr<void> rollbackTransaction() {
     applied.clear();
     applied.addAll(appliedForRollback);
     appliedForRollback.clear();
+  }
+}
+
+class SyncMockDatabase<T> extends MockDatabase<T> implements SyncDatabase<T> {
+  SyncMockDatabase([super.applied]);
+
+  @override
+  Iterator<Migration<T>> retrieveAllMigrations() {
+    return applied.iterator;
+  }
+}
+
+class AsyncMockDatabase<T> extends MockDatabase<T> implements AsyncDatabase<T> {
+  AsyncMockDatabase([super.applied]);
+
+  @override
+  Stream<Migration<T>> retrieveAllMigrations() {
+    return Stream.fromIterable(applied);
   }
 }
