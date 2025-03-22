@@ -37,6 +37,8 @@ jobs:
         dart: ['3.5.4', stable]
         package: ${{ fromJson(needs.packages.outputs.packages) }}
       fail-fast: false
+    env:
+      GENERATED: false
     steps:
       - uses: actions/checkout@v4
       
@@ -74,10 +76,10 @@ jobs:
       - name: Check if coverage is generated
         if: matrix.dart == 'stable'
         working-directory: ${{ matrix.package }}
-        run: test -f coverage/lcov.info
+        run: echo "GENERATED=$(if test -f coverage/lcov.info; then echo true; else echo false; fi)" >> $GITHUB_ENV
 
       - name: Upload coverage reports to Codecov
-        if: matrix.dart == 'stable' && !failure()
+        if: env.GENERATED == 'true'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
