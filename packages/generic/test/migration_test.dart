@@ -42,4 +42,21 @@ void main() {
     expect(migration, migration2);
     expect(migration, isNot(migration3));
   });
+
+  test('Hashcode is correctly implemented', () {
+    final migration = Migration<void>(definedAt: DateTime.utc(1970, 0, 1), up: null, down: null);
+
+    expect({migration}, contains(migration));
+  });
+
+  test('Order is defined by definedAt', () {
+    final migration1 = Migration<void>(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null);
+    final migration2 = Migration<void>(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null);
+    final migration3 = Migration<void>(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null);
+
+    expect(migration1 < migration2, isTrue);
+    expect(migration2 > migration1, isTrue);
+    expect(migration1 >= migration1, isTrue);
+    expect(migration3 <= migration3, isTrue);
+  });
 }
