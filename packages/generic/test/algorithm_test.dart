@@ -100,5 +100,61 @@ void main() {
 
       expect(eq.equals(defined, db.applied), isTrue);
     });
+
+    test("Multiple migrations", () async {
+      final defined = [
+        Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
+      ];
+      final db = AsyncMockDatabase<void>();
+
+      await migrator.call(db: db, defined: defined.iterator);
+
+      expect(eq.equals(defined, db.applied), isTrue);
+    });
+
+    test("Wrong order throws", () async {
+      final defined = [
+        Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 5), up: null, down: null),
+      ];
+      final db = AsyncMockDatabase<void>();
+
+      await expectLater(() => migrator.call(db: db, defined: defined.iterator), throwsA(isA<StateError>()));
+
+      // Ensure that the database is still empty (rollback was successful).
+      expect(db.applied, isEmpty);
+    });
+
+    test('Rollback no common', () async {
+      final db = AsyncMockDatabase([
+        Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
+      ]);
+
+      await AsyncMigrator<Null>().call(db: db, defined: <Migration<Null>>[].iterator);
+
+      expect(db.applied, isEmpty);
+    });
+
+    test('Rollback some common', () async {
+      final defined = [
+        Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 9), up: null, down: null),
+      ];
+
+      final db = AsyncMockDatabase([
+        Migration(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null),
+        Migration(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null),
+      ]);
+
+      await AsyncMigrator<Null>().call(db: db, defined: defined.iterator);
+
+      expect(eq.equals(db.applied, defined), isTrue);
+    });
   });
 }
