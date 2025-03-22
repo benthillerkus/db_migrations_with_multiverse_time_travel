@@ -6,10 +6,11 @@ This is an integration for [db_migrations_with_multiverse_time_travel](https://p
 
 ```dart
 import 'package:sqflite_migrations_with_multiverse_time_travel/sqflite_migrations_with_multiverse_time_travel.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 final migrations = [
   Migration(
-    definedAt: DateTime(2025, 3, 14, 1),
+    definedAt: DateTime.utc(2025, 3, 14, 1),
     up: """
 create table users (
   id integer primary key autoincrement,
@@ -25,11 +26,19 @@ drop table users;
   ),
 ];
 
-final db = sqlite3.openInMemory();
+Future<void> main() async {
+  sqfliteFfiInit();
 
-await Sqlite3Database(db).migrate(migrations);
+  var databaseFactory = databaseFactoryFfi;
+  var db = await databaseFactory.openDatabase(inMemoryDatabasePath);
 
-for (final row in db.select('select * from users').rows) {
-  print(row);
+  await SqfliteDatabase(db).migrate(migrations);
+
+  for (final row in await db.query('users')) {
+    print(row);
+  }
+
+  await db.close();
 }
+
 ```
