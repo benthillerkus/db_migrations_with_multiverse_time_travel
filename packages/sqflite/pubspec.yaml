@@ -1,23 +1,20 @@
-name: db_migrations_with_multiverse_time_travel
-description: Runs database migrations for apps with local / embedded databases like SQLite. Check out different branches during development without having to reset the DB.
-version: 1.1.0
+name: sqflite_migrations_with_multiverse_time_travel
+description: Runs database migrations for apps using sqflite. Check out different branches during development without having to reset the db.
+version: 1.0.0
 repository: https://github.com/benthillerkus/db_migrations_with_multiverse_time_travel
 issue_tracker: https://github.com/benthillerkus/db_migrations_with_multiverse_time_travel/issues
-topics: ["database", "migration"]
+topics: ["database", "migration", "sqflite"]
 environment:
   sdk: ^3.5.0
 screenshots:
   - description: The logo featuring two arrows representing version control branches flying into a clock
     path: logo.webp
 
-resolution: workspace
-
+# Add regular dependencies here.
 dependencies:
-  logging: ^1.0.0
-  meta: ^1.0.2
+  db_migrations_with_multiverse_time_travel: ^1.1.0
+  sqflite_common: ^2.5.5
 
 dev_dependencies:
-  ansicolor: ^2.0.3
-  collection:
   lints: ^5.0.0
-  test: ^1.22.0
+  test: ^1.24.0

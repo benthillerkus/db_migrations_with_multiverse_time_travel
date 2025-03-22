@@ -1,5 +1,5 @@
 name: sqlite3_migrations_with_multiverse_time_travel
-description: Runs database migrations for apps using sqlite3. Check out different branches during development without having to reset the db
+description: Runs database migrations for apps using sqlite3. Check out different branches during development without having to reset the db.
 version: 1.0.2
 repository: https://github.com/benthillerkus/db_migrations_with_multiverse_time_travel
 issue_tracker: https://github.com/benthillerkus/db_migrations_with_multiverse_time_travel/issues
