@@ -25,7 +25,7 @@ jobs:
 
       - id: getpackages
         run: |
-          echo "paths=$(dart pub workspace list --json | jq -r -c '[.packages[] | select(.name != "workspace") | .path]')" >> $GITHUB_OUTPUT
+          echo "paths=$(dart pub workspace list --json | jq -r -c '[.packages[] | select(.name != "workspace") | .path]' | sed 's|^$(pwd)/||')" >> $GITHUB_OUTPUT
 
   build:
     needs: packages
@@ -51,9 +51,8 @@ jobs:
         run: dart pub get
 
       - name: Run tests
-        run: |
-          cd ${{ matrix.package }}
-          dart test
+        working-directory: ${{ matrix.package }}
+        run: dart test
 
   check:
     runs-on: ubuntu-latest
