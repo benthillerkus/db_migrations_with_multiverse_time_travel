@@ -8,11 +8,6 @@
 Runs database migrations for apps with local / embedded databases like SQLite.
 Enables you to check out feature branches during development without resetting your database.
 
-## Available Integrations
-
-- [sqlite3](https://pub.dev/packages/sqlite3_migrations_with_multiverse_time_travel)
-- [sqflite](https://pub.dev/packages/sqflite_migrations_with_multiverse_time_travel)
-
 ## Table of Contents
 
 - [What does this package do?](#what-does-this-package-do)
