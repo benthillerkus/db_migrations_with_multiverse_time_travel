@@ -10,7 +10,8 @@ class Sqlite3Database implements SyncDatabase<String> {
 
   @override
   void initializeMigrationsTable() {
-    _db.execute('''CREATE TABLE IF NOT EXISTS migrations (
+    _db.execute('''
+CREATE TABLE IF NOT EXISTS migrations (
   defined_at INTEGER PRIMARY KEY,
   name TEXT,
   description TEXT,

@@ -6,7 +6,7 @@ import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migration
 
 final migrations = [
   Migration(
-    definedAt: DateTime(2025, 3, 14, 1),
+    definedAt: DateTime.utc(2025, 3, 14, 1),
     up: """
 create table users (
   id integer primary key autoincrement,

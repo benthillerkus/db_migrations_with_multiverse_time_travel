@@ -1,8 +1,7 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
+/// A library for managing SQLite database migrations with multiverse time travel.
 library;
 
-export 'src/sqflite_migrations_with_multiverse_time_travel_base.dart';
+export 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart'
+    show Migration, AsyncMigrateExt;
 
-// TODO: Export any libraries intended for clients of this package.
+export 'src/database.dart';
