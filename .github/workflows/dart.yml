@@ -54,6 +54,11 @@ jobs:
         if: matrix.dart == 'stable'
         run: dart pub global activate coverage
 
+      - name: Run tests
+        if: matrix.dart != 'stable'
+        working-directory: ${{ matrix.package }}
+        run: dart test
+
       - name: Run tests with coverage
         if: matrix.dart == 'stable'
         working-directory: ${{ matrix.package }}
@@ -62,18 +67,17 @@ jobs:
             dart pub global run coverage:test_with_coverage --branch-coverage --function-coverage | while read -r line; do
               echo "$line"
               if [[ "$line" == *"🎉"* ]]; then
-                (sleep 2 && kill $(ps -ef | grep '[d]art' | awk '{print $2}')) &
+                (sleep 2 && kill $(ps -ef | grep '[d]art' | awk '{print $2}') && echo killed dead process) &
                 exit 0
               fi
             done
 
-      - name: Run tests
-        if: matrix.dart != 'stable'
-        working-directory: ${{ matrix.package }}
-        run: dart test
+      - name: Check if coverage is generated
+        if: matrix.dart == 'stable'
+        run: test -f coverage/lcov.info
 
       - name: Upload coverage reports to Codecov
-        if: matrix.dart == 'stable'  
+        if: matrix.dart == 'stable' && !failure()
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
