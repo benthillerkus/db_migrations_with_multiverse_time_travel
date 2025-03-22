@@ -6,7 +6,6 @@ import 'package:meta/meta.dart';
 import 'database.dart';
 import 'migration.dart';
 
-
 /// An extension on [Database] that adds a [migrate] method.
 extension SyncMigrateExt<T> on SyncDatabase<T> {
   /// Migrates the database using the given [migrations].
@@ -271,7 +270,7 @@ class SyncMigrator<T> {
 /// {@macro dmwmt.migrator}
 class AsyncMigrator<T> {
   /// Creates a new [AsyncMigrator] with an optional [logger].
-  /// 
+  ///
   /// {@macro dmwmt.migrator.new}
   AsyncMigrator({Logger? logger})
       : log = logger ?? Logger('db.migrate'),
@@ -284,7 +283,7 @@ class AsyncMigrator<T> {
   AsyncDatabase<T>? _db;
 
   /// Flag to check if the migrator is already working.
-  /// 
+  ///
   /// When this is `true`, calling [call] will throw a [ConcurrentModificationError].
   bool get working => _db != null;
 
