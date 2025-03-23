@@ -12,6 +12,9 @@
 		},
 		{
 			"path": "packages/sqflite"
+		},
+		{
+			"path": "packages/cbl"
 		}
 	],
 	"settings": {

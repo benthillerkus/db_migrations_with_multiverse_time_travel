@@ -9,3 +9,4 @@ workspace:
   - packages/generic
   - packages/sqlite3
   - packages/sqflite
+  - packages/cbl
