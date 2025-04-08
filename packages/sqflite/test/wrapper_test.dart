@@ -11,7 +11,7 @@ void main() {
   });
 
   setUp(() async {
-    db = await databaseFactoryFfi.openDatabase(inMemoryDatabasePath);
+    db = await databaseFactoryFfiNoIsolate.openDatabase(inMemoryDatabasePath);
     wrapper = SqfliteDatabase(db);
   });
 
