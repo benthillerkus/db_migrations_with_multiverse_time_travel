@@ -70,8 +70,9 @@ CREATE TABLE IF NOT EXISTS migrations (
         );
       }
     } catch (e) {
-      await cursor.close();
       rethrow;
+    } finally {
+      await cursor.close();
     }
   }
 
