@@ -207,6 +207,7 @@ class SyncMigrator<T> {
       lastCommon = _defined!.current;
       if (lastCommon.alwaysApply) {
         if (!_inTransaction) {
+          log.finer('beginning transaction...');
           _db!.beginTransaction();
           _inTransaction = true;
         }
@@ -244,6 +245,7 @@ class SyncMigrator<T> {
     final toRollback = [for (; _hasApplied; _moveNextApplied()) _applied!.current].reversed.toList();
 
     if (!_inTransaction && toRollback.isNotEmpty) {
+      log.finer('beginning transaction...');
       _db!.beginTransaction();
       _inTransaction = true;
     }
@@ -272,6 +274,7 @@ class SyncMigrator<T> {
 
     while (_hasDefined) {
       if (!_inTransaction) {
+        log.finer('beginning transaction...');
         _db!.beginTransaction();
         _inTransaction = true;
       }
@@ -429,6 +432,7 @@ class AsyncMigrator<T> {
       lastCommon = _defined!.current;
       if (lastCommon.alwaysApply) {
         if (!_inTransaction) {
+          log.finer('beginning transaction...');
           await _db!.beginTransaction();
           _inTransaction = true;
         }
@@ -460,6 +464,7 @@ class AsyncMigrator<T> {
     final toRollback = [for (; _hasApplied; await _moveNextApplied()) _applied!.current].reversed.toList();
 
     if (!_inTransaction && toRollback.isNotEmpty) {
+      log.finer('beginning transaction...');
       await _db!.beginTransaction();
       _inTransaction = true;
     }
@@ -481,6 +486,7 @@ class AsyncMigrator<T> {
     final now = DateTime.now().toUtc();
     while (_hasDefined) {
       if (!_inTransaction) {
+        log.finer('beginning transaction...');
         await _db!.beginTransaction();
         _inTransaction = true;
       }

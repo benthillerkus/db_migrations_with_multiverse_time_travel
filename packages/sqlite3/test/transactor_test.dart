@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
 import 'package:file/local.dart';
+import 'package:logging/logging.dart';
 import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migrations_with_multiverse_time_travel.dart';
@@ -16,6 +17,10 @@ void main() {
     open.overrideFor(OperatingSystem.windows, () => DynamicLibrary.open('winsqlite3.dll'));
     vfs = TestSqliteFileSystem(fs: const LocalFileSystem());
     sqlite3.registerVirtualFileSystem(vfs);
+    Logger.root.level = Level.ALL;
+    Logger.root.onRecord.listen((record) {
+      print('${record.level.name}: ${record.time}: ${record.message}');
+    });
   });
 
   tearDownAll(() {
