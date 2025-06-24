@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'dart:io';
 
 import 'package:file/local.dart';
 import 'package:logging/logging.dart';
@@ -65,17 +66,17 @@ void main() {
   });
 
   test("BackupTransaction", retry: 3, () {
-    if (vfs.xAccess("test.db", 0) == 1) {
-      vfs.xDelete("test.db", 1);
+    if (File("test.db").existsSync()) {
+      File("test.db").deleteSync();
     }
-    db = sqlite3.open("test.db", vfs: vfs.name);
+    db = sqlite3.open("test.db");
     wrapper = Sqlite3Database(db, transactor: BackupTransactionDelegate());
     addTearDown(() {
       db.dispose();
-      vfs.xDelete("test.db", 1);
+      File("test.db").deleteSync();
     });
     expect(() => wrapper.migrate(migrations), throwsA(isA<SqliteException>()));
-    db = sqlite3.open("test.db", vfs: vfs.name);
+    db = sqlite3.open("test.db");
     // Backup transaction should rollback, so the tbl table should not exist
     final result = db.select("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'tbl'");
     expect(result, isEmpty);
