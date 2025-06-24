@@ -7,6 +7,7 @@ export 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_mul
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart' as p;
 
 export 'src/database.dart';
+export 'src/transaction.dart';
 
 /// Typedef for [p.Migration] over [String].
 ///

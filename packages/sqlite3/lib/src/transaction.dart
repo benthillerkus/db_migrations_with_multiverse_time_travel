@@ -89,5 +89,6 @@ class BackupTransactionDelegate extends Transactor {
     db.dispose();
     if (_path == ':memory:') return;
     _backupFile.copySync(_dbFile.path);
+    _backupFile.deleteSync();
   }
 }
