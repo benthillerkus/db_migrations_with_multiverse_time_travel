@@ -1,4 +1,5 @@
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
+import 'package:meta/meta.dart';
 import 'package:sqlite3/common.dart';
 
 /// A [SyncDatabase] implementation for SQLite3.
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
+  @internal
   Iterator<Migration<String>> retrieveAllMigrations() {
     return _db
         .select('''SELECT * FROM migrations ORDER BY defined_at ASC''')
@@ -50,6 +52,7 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
+  @internal
   void storeMigrations(List<Migration<String>> migrations) {
     final withAppliedAt = _db.prepare(
       "INSERT INTO migrations (defined_at, name, description, applied_at, up, down) VALUES (?, ?, ?, ?, ?, ?)",
@@ -84,6 +87,7 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
+  @internal
   void removeMigrations(List<Migration<String>> migrations) {
     final stmt = _db.prepare('''DELETE FROM migrations WHERE defined_at = ?''');
 
@@ -95,21 +99,25 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
+  @internal
   void performMigration(String migration) {
     _db.execute(migration);
   }
 
   @override
+  @internal
   void beginTransaction() {
     _db.execute('BEGIN TRANSACTION');
   }
 
   @override
+  @internal
   void commitTransaction() {
     _db.execute('COMMIT TRANSACTION');
   }
 
   @override
+  @internal
   void rollbackTransaction() {
     _db.execute('ROLLBACK TRANSACTION');
   }

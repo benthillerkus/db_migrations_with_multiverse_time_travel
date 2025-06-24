@@ -7,6 +7,7 @@ class MockDatabase<T> implements MaybeAsyncDatabase<T> {
   MockDatabase([List<Migration<T>>? applied])
       : applied = applied ?? List.empty(growable: true),
         appliedForRollback = List.empty(growable: true),
+        performedMigrations = List.empty(growable: true),
         migrationsTableInitialized = false,
         log = Logger('db.mock');
 
@@ -25,7 +26,10 @@ class MockDatabase<T> implements MaybeAsyncDatabase<T> {
   @override
   FutureOr<void> performMigration(T migration) {
     log.info('performing migration', migration);
+    performedMigrations.add(migration);
   }
+
+  List<T> performedMigrations;
 
   @override
   dynamic retrieveAllMigrations() {

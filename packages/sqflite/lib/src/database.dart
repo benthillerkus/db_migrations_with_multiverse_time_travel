@@ -1,22 +1,32 @@
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
+import 'package:meta/meta.dart';
 import 'package:sqflite_common/sqlite_api.dart';
+import 'package:sqflite_migrations_with_multiverse_time_travel/src/transaction.dart';
 
 /// An [AsyncDatabase] implementation for SQLite.
 class SqfliteDatabase implements AsyncDatabase<String> {
   /// Creates a new [SqfliteDatabase] instance.
-  const SqfliteDatabase(this._db);
+  const SqfliteDatabase(
+    this._db, {
+    this.transactor = const TransactionDelegate(),
+  });
 
   final Database _db;
+  
+  /// Responsible for handling transactions
+  final Transactor transactor;
 
   @override
-  Future<void> beginTransaction() {
-    return _db.execute('BEGIN TRANSACTION');
-  }
+  @internal
+  Future<void> beginTransaction() => transactor.begin(_db);
 
   @override
-  Future<void> commitTransaction() {
-    return _db.execute('COMMIT TRANSACTION');
-  }
+  @internal
+  Future<void> commitTransaction() => transactor.commit(_db);
+
+  @override
+  @internal
+  Future<void> rollbackTransaction() => transactor.rollback(_db);
 
   @override
   Future<void> initializeMigrationsTable() {
@@ -44,6 +54,7 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
+  @internal
   Future<void> removeMigrations(List<Migration<String>> migrations) {
     return Future.wait(migrations.map((migration) {
       return _db.execute('DELETE FROM migrations WHERE defined_at = ?', [migration.definedAt.millisecondsSinceEpoch]);
@@ -51,6 +62,7 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
+  @internal
   Stream<Migration<String>> retrieveAllMigrations() async* {
     final cursor = await _db.rawQueryCursor("SELECT * FROM migrations ORDER BY defined_at ASC", []);
 
@@ -77,11 +89,7 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
-  Future<void> rollbackTransaction() {
-    return _db.execute('ROLLBACK TRANSACTION');
-  }
-
-  @override
+  @internal
   Future<void> storeMigrations(List<Migration<String>> migrations) {
     return Future.wait(migrations.map((migration) {
       return _db.insert('migrations', {

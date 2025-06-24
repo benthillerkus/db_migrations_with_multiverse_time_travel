@@ -39,7 +39,8 @@ class SyncMigrator<T> {
   SyncMigrator({Logger? logger})
       : log = logger ?? Logger('db.migrate'),
         _hasDefined = false,
-        _hasApplied = false;
+        _hasApplied = false,
+        _inTransaction = false;
 
   /// {@template dmwmt.migrator.log}
   /// The logger used during migrations.
@@ -90,6 +91,16 @@ class SyncMigrator<T> {
   /// {@endtemplate}
   Migration<T>? _previousApplied;
 
+  /// {@template dmwmt.migrator._inTransaction}
+  /// Whether the migrator has started a transaction on the [_db].
+  ///
+  /// This is used so that the migrator can be lazy about transactions,
+  /// only starting one when it needs to actually change something on the database.
+  ///
+  /// (Arguably, everything should then still be in a READ transaction, but we're not going that far)
+  /// {@endtemplate}
+  bool _inTransaction;
+
   void _moveNextDefined() {
     _previousDefined = _defined!.current;
     _hasDefined = _defined!.moveNext();
@@ -120,7 +131,6 @@ class SyncMigrator<T> {
     initialize(db, defined);
     // [_defined] and [_applied] are moved to the first migration
 
-    _db!.beginTransaction();
     try {
       findLastCommonMigration();
       // [_defined] and [_applied] are moved to the migration after the last common migration
@@ -144,9 +154,13 @@ class SyncMigrator<T> {
         }
       }
 
-      _db!.commitTransaction();
+      if (_inTransaction) {
+        _db!.commitTransaction();
+      }
     } catch (e) {
-      _db!.rollbackTransaction();
+      if (_inTransaction) {
+        _db!.rollbackTransaction();
+      }
       rethrow;
     }
 
@@ -166,6 +180,7 @@ class SyncMigrator<T> {
 
     _db = db;
     _defined = defined;
+    _inTransaction = false;
 
     if (!_db!.isMigrationsTableInitialized()) {
       log.fine('initializing migrations table');
@@ -181,6 +196,8 @@ class SyncMigrator<T> {
   /// Find the last common migration between defined and applied migrations.
   ///
   /// The last common migration is the last (going forwards in time) migration that is both defined and applied.
+  ///
+  /// Any common migration that has [Migration.alwaysApply] set to `true` will be applied to the database.
   /// {@endtemplate}
   @visibleForTesting
   Migration<T>? findLastCommonMigration() {
@@ -188,6 +205,13 @@ class SyncMigrator<T> {
     Migration<T>? lastCommon;
     while (_hasDefined && _hasApplied && _defined!.current == _applied!.current) {
       lastCommon = _defined!.current;
+      if (lastCommon.alwaysApply) {
+        if (!_inTransaction) {
+          _db!.beginTransaction();
+          _inTransaction = true;
+        }
+        _db!.performMigration(lastCommon.up);
+      }
       _moveNextDefined();
       _moveNextApplied();
     }
@@ -219,6 +243,11 @@ class SyncMigrator<T> {
 
     final toRollback = [for (; _hasApplied; _moveNextApplied()) _applied!.current].reversed.toList();
 
+    if (!_inTransaction && toRollback.isNotEmpty) {
+      _db!.beginTransaction();
+      _inTransaction = true;
+    }
+
     for (final migration in toRollback) {
       log.finer('|_ - migration ${migration.humanReadableId}');
       _db!.performMigration(migration.down);
@@ -240,7 +269,12 @@ class SyncMigrator<T> {
 
     final toApply = List<Migration<T>>.empty(growable: true);
     final now = DateTime.now().toUtc();
+
     while (_hasDefined) {
+      if (!_inTransaction) {
+        _db!.beginTransaction();
+        _inTransaction = true;
+      }
       final migration = _defined!.current.copyWith(appliedAt: now);
       log.finer('|_ + migration ${migration.humanReadableId}');
       _db!.performMigration(migration.up);
@@ -275,7 +309,8 @@ class AsyncMigrator<T> {
   AsyncMigrator({Logger? logger})
       : log = logger ?? Logger('db.migrate'),
         _hasDefined = false,
-        _hasApplied = false;
+        _hasApplied = false,
+        _inTransaction = false;
 
   /// {@macro dmwmt.migrator.log}
   final Logger log;
@@ -305,6 +340,9 @@ class AsyncMigrator<T> {
   /// {@macro dmwmt.migrator._previousApplied}
   Migration<T>? _previousApplied;
 
+  /// {@macro dmwmt.migrator._inTransaction}
+  bool _inTransaction;
+
   void _moveNextDefined() {
     _previousDefined = _defined!.current;
     _hasDefined = _defined!.moveNext();
@@ -333,7 +371,6 @@ class AsyncMigrator<T> {
 
     await initialize(db, defined);
 
-    await _db!.beginTransaction();
     try {
       await findLastCommonMigration();
 
@@ -349,9 +386,13 @@ class AsyncMigrator<T> {
         }
       }
 
-      await _db!.commitTransaction();
+      if (_inTransaction) {
+        await _db!.commitTransaction();
+      }
     } catch (e) {
-      await _db!.rollbackTransaction();
+      if (_inTransaction) {
+        await _db!.rollbackTransaction();
+      }
       rethrow;
     }
 
@@ -367,6 +408,7 @@ class AsyncMigrator<T> {
 
     _db = db;
     _defined = defined;
+    _inTransaction = false;
 
     if (!await _db!.isMigrationsTableInitialized()) {
       log.fine('initializing migrations table');
@@ -385,6 +427,13 @@ class AsyncMigrator<T> {
     Migration<T>? lastCommon;
     while (_hasDefined && _hasApplied && _defined!.current == _applied!.current) {
       lastCommon = _defined!.current;
+      if (lastCommon.alwaysApply) {
+        if (!_inTransaction) {
+          await _db!.beginTransaction();
+          _inTransaction = true;
+        }
+        await _db!.performMigration(lastCommon.up);
+      }
       _moveNextDefined();
       await _moveNextApplied();
     }
@@ -410,6 +459,11 @@ class AsyncMigrator<T> {
 
     final toRollback = [for (; _hasApplied; await _moveNextApplied()) _applied!.current].reversed.toList();
 
+    if (!_inTransaction && toRollback.isNotEmpty) {
+      await _db!.beginTransaction();
+      _inTransaction = true;
+    }
+
     for (final migration in toRollback) {
       log.finer('|_ - migration ${migration.humanReadableId}');
       await _db!.performMigration(migration.down);
@@ -426,6 +480,10 @@ class AsyncMigrator<T> {
     final toApply = List<Migration<T>>.empty(growable: true);
     final now = DateTime.now().toUtc();
     while (_hasDefined) {
+      if (!_inTransaction) {
+        await _db!.beginTransaction();
+        _inTransaction = true;
+      }
       final migration = _defined!.current.copyWith(appliedAt: now);
       log.finer('|_ + migration ${migration.humanReadableId}');
       await _db!.performMigration(migration.up);

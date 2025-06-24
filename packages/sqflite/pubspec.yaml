@@ -15,9 +15,11 @@ resolution: workspace
 # Add regular dependencies here.
 dependencies:
   db_migrations_with_multiverse_time_travel: ^1.1.0
+  meta: ^1.17.0
   sqflite_common: ^2.4.1
 
 dev_dependencies:
   lints: ^5.0.0
   test: ^1.24.0
   sqflite_common_ffi: ^2.2.1
+  mutex: ^3.1.0

@@ -1,9 +1,11 @@
+//// {@template dmwmt.migration}
 /// A change to the database that can be applied and rolled back.
 ///
 /// A migration is implemented as a simple data class that uses [definedAt] as the primary key.
 ///
 /// Migrations have to be serialized and deserialized preserving atleast [definedAt] and [down]
 /// to be able to make [SyncMigrator] work.
+/// {endtemplate}
 class Migration<T> implements Comparable<Migration<T>> {
   /// Creates a new migration data class instance.
   ///
@@ -15,6 +17,7 @@ class Migration<T> implements Comparable<Migration<T>> {
     this.name,
     this.description,
     this.appliedAt,
+    this.alwaysApply = false,
     required this.up,
     required this.down,
   }) : // Ensures that the DateTime is in UTC and also truncates the microseconds,
@@ -28,6 +31,25 @@ class Migration<T> implements Comparable<Migration<T>> {
           })()
               .millisecondsSinceEpoch,
           isUtc: true,
+        );
+
+  /// Create a new [Migration] that undoes [migration]
+  /// by flipping its [up] and [down] fields.
+  Migration.undo({
+    required DateTime definedAt,
+    String? name,
+    String? description,
+    DateTime? appliedAt,
+    bool alwaysApply = false,
+    required Migration<T> migration,
+  }) : this(
+          definedAt: definedAt,
+          name: name ?? (migration.name != null ? "Undo ${migration.name}" : null),
+          description: description,
+          appliedAt: appliedAt,
+          alwaysApply: alwaysApply,
+          up: migration.down,
+          down: migration.up,
         );
 
   /// The identity of the migration.
@@ -52,6 +74,13 @@ class Migration<T> implements Comparable<Migration<T>> {
   /// on insertion to represent the time the migration was applied.
   final DateTime? appliedAt;
 
+  /// Whether this migration should always be applied, even if it was already applied before.
+  ///
+  /// This might be useful for enabling per session PRAGMAs like `PRAGMA foreign_keys = ON;`
+  /// in SQLite that need to be applied every time the database is opened,
+  /// but also may be incompatible with some states of the database during the migration.
+  final bool alwaysApply;
+
   /// The migration to apply to the database.
   ///
   /// This could be a SQL string or a description of added and removed columns.
@@ -66,7 +95,7 @@ class Migration<T> implements Comparable<Migration<T>> {
 
   @override
   String toString() {
-    return 'Migration{definedAt: $definedAt, name: $name, decription: $description, appliedAt: $appliedAt, up: $up, down: $down}';
+    return 'Migration{definedAt: $definedAt, name: $name, decription: $description, alwaysApply: $alwaysApply, appliedAt: $appliedAt, up: $up, down: $down}';
   }
 
   /// A human-readable identifier for the migration. Used for debugging and logging.
@@ -78,6 +107,7 @@ class Migration<T> implements Comparable<Migration<T>> {
     String? name,
     String? description,
     DateTime? appliedAt,
+    bool? alwaysApply,
     T? up,
     T? down,
   }) {
@@ -86,6 +116,7 @@ class Migration<T> implements Comparable<Migration<T>> {
       name: name ?? this.name,
       description: description ?? this.description,
       appliedAt: appliedAt ?? this.appliedAt,
+      alwaysApply: alwaysApply ?? this.alwaysApply,
       up: up ?? this.up,
       down: down ?? this.down,
     );

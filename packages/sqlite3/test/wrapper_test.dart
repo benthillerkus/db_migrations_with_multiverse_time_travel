@@ -49,7 +49,7 @@ void main() {
 
     group('Insert migration', () {
       test('Insertion', () {
-        final migration = Migration<String>(
+        final migration = Migration(
           definedAt: DateTime.utc(2021, 1, 1),
           name: 'test',
           description: 'test',
@@ -73,7 +73,7 @@ void main() {
         final moonLanding = DateTime.utc(1969, 7, 20, 20, 18, 04);
         FakeAsync(initialTime: moonLanding).run((_) {
           wrapper.storeMigrations([
-            Migration<String>(
+            Migration(
               definedAt: DateTime.utc(1902, 1, 1),
               up: 'CREATE TABLE tbl (a TEXT)',
               down: 'DROP TABLE tbl',
