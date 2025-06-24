@@ -2,12 +2,20 @@ import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_mul
 import 'package:meta/meta.dart';
 import 'package:sqlite3/common.dart';
 
+import 'transaction.dart';
+
 /// A [SyncDatabase] implementation for SQLite3.
 class Sqlite3Database implements SyncDatabase<String> {
   /// Creates a new [Sqlite3Database] instance.
-  const Sqlite3Database(this._db);
+  const Sqlite3Database(
+    this._db, {
+    this.transactor = const TransactionDelegate(),
+  });
 
   final CommonDatabase _db;
+
+  /// Responsible for handling transactions
+  final Transactor transactor;
 
   @override
   void initializeMigrationsTable() {
@@ -106,19 +114,13 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  void beginTransaction() {
-    _db.execute('BEGIN TRANSACTION');
-  }
+  void beginTransaction() => transactor.begin(_db);
 
   @override
   @internal
-  void commitTransaction() {
-    _db.execute('COMMIT TRANSACTION');
-  }
+  void commitTransaction() => transactor.commit(_db);
 
   @override
   @internal
-  void rollbackTransaction() {
-    _db.execute('ROLLBACK TRANSACTION');
-  }
+  void rollbackTransaction() => transactor.rollback(_db);
 }

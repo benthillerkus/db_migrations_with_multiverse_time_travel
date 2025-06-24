@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:sqflite_common/sqflite.dart';
+import 'package:sqlite3/common.dart';
 
 /// A delegate for handling database transactions.
 ///
@@ -10,13 +10,13 @@ abstract class Transactor {
   const Transactor();
 
   /// Begins a transaction on the provided [db].
-  Future<void> begin(Database db);
+  void begin(CommonDatabase db);
 
   /// Commits the transaction on the provided [db].
-  Future<void> commit(Database db);
+  void commit(CommonDatabase db);
 
   /// Rolls back the transaction on the provided [db].
-  Future<void> rollback(Database db);
+  void rollback(CommonDatabase db);
 }
 
 /// A [Transactor] that does not perform any transaction.
@@ -27,13 +27,13 @@ class NoTransactionDelegate extends Transactor {
   const NoTransactionDelegate();
 
   @override
-  Future<void> begin(Database db) => Future.value();
+  void begin(CommonDatabase db) {}
 
   @override
-  Future<void> commit(Database db) => Future.value();
+  void commit(CommonDatabase db) {}
 
   @override
-  Future<void> rollback(Database db) => Future.value();
+  void rollback(CommonDatabase db) {}
 }
 
 /// A [Transactor] that uses standard SQL transactions.
@@ -42,13 +42,13 @@ class TransactionDelegate extends Transactor {
   const TransactionDelegate();
 
   @override
-  Future<void> begin(Database db) => db.execute('BEGIN TRANSACTION');
+  void begin(CommonDatabase db) => db.execute('BEGIN TRANSACTION');
 
   @override
-  Future<void> commit(Database db) => db.execute('COMMIT TRANSACTION');
+  void commit(CommonDatabase db) => db.execute('COMMIT TRANSACTION');
 
   @override
-  Future<void> rollback(Database db) => db.execute('ROLLBACK TRANSACTION');
+  void rollback(CommonDatabase db) => db.execute('ROLLBACK TRANSACTION');
 }
 
 /// A [Transactor] that creates a backup of the database that can be restored in case of a rollback.
@@ -57,45 +57,37 @@ class TransactionDelegate extends Transactor {
 /// so you will need to reopen it if you want to continue using it.
 class BackupTransactionDelegate extends Transactor {
   /// Creates a [BackupTransactionDelegate] that creates a backup of the database.
-  ///
-  /// The [backupFileName] is the name of the backup file that will be created in the same directory as the database file.
   BackupTransactionDelegate({
     this.backupFileName = 'backup.db',
   });
 
   /// The name of the backup file that will be created in the same directory as the database file.
   final String backupFileName;
+  late final String _path;
   late final File _dbFile;
   late final File _backupFile;
 
   @override
-  Future<void> begin(Database db) async {
-    if (db.path == ":memory:") {
-      return db.execute("VACUUM INTO '$backupFileName';");
+  void begin(CommonDatabase db) {
+    _path = db.select("select file from pragma_database_list where name = 'main'").first.values.first! as String;
+    if (_path.isEmpty || _path == ':memory:') {
+      db.execute("VACUUM INTO '$backupFileName';");
     }
-    _dbFile = File(db.path);
-    _backupFile = File.fromUri(_dbFile.uri.replace(
-        pathSegments: _dbFile.uri.pathSegments.take(_dbFile.uri.pathSegments.length - 2).followedBy([backupFileName])));
-    if (await _backupFile.exists()) {
-      await _backupFile.delete();
+    _dbFile = File(_path);
+    _backupFile = File('${_dbFile.parent.path}/$backupFileName');
+    if (_backupFile.existsSync()) {
+      _backupFile.deleteSync();
     }
-
-    return db.execute("VACUUM INTO '${_backupFile.uri.toFilePath()}';");
+    db.execute("VACUUM INTO '${_backupFile.path}';");
   }
 
   @override
-  Future<void> commit(Database db) {
-    // Close it here too despite not being necessary,
-    // to make sure that user code is able to handle
-    // the rollback case correctly, where there
-    // is no choice but to close the database.
-    return db.close();
-  }
+  void commit(CommonDatabase db) => db.dispose();
 
   @override
-  Future<void> rollback(Database db) async {
-    await db.close();
-    if (db.path == ":memory:") return;
-    await _backupFile.copy(_dbFile.path);
+  void rollback(CommonDatabase db) {
+    db.dispose();
+    if (_path == ':memory:') return;
+    _backupFile.copySync(_dbFile.path);
   }
 }
