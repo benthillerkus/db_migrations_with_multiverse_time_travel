@@ -10,6 +10,6 @@ export 'src/database.dart';
 export 'src/transaction.dart';
 
 /// Typedef for [p.Migration] of [String].
-/// 
+///
 /// {@macro dmwmt.migration}
 typedef Migration = p.Migration<String>;

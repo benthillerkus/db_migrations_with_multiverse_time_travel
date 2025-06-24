@@ -12,7 +12,7 @@ class SqfliteDatabase implements AsyncDatabase<String> {
   });
 
   final Database _db;
-  
+
   /// Responsible for handling transactions
   final Transactor transactor;
 

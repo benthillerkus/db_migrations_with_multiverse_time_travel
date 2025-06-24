@@ -6,6 +6,7 @@ import 'package:mutex/mutex.dart';
 void main() {
   late Database db;
   late SqfliteDatabase wrapper;
+
   /// Prevents concurrency issues with file creation / deletion
   final mutex = Mutex();
 
