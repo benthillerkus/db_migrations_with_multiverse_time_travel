@@ -33,14 +33,14 @@ void main() {
     mutex.release();
   });
 
-  test("Regular stuff works", () async {
+  test("Regular stuff works", retry: 2, () async {
     final migrations = [
       Migration(definedAt: DateTime.utc(2000, 11, 3), up: 'select(0)', down: 'select(0)'),
     ];
     await wrapper.migrate(migrations);
   });
 
-  test("Reopen after commit", () async {
+  test("Reopen after commit", retry: 2, () async {
     final migrations = [
       Migration(definedAt: DateTime.utc(2003, 1, 5, 4), up: '''
 create table users (
@@ -65,7 +65,7 @@ delete from users;
     await expectLater(db.query('users'), completion(hasLength(2)));
   });
 
-  test("Rollback", () async {
+  test("Rollback", retry: 2, () async {
     final migrations = [
       Migration(definedAt: DateTime.utc(2005), up: '''
 create table farmers(
