@@ -95,7 +95,7 @@ class Migration<T> implements Comparable<Migration<T>> {
 
   @override
   String toString() {
-    return 'Migration{definedAt: $definedAt, name: $name, decription: $description, alwaysApply: $alwaysApply, appliedAt: $appliedAt, up: $up, down: $down}';
+    return 'Migration{definedAt: $definedAt, name: $name, description: $description, alwaysApply: $alwaysApply, appliedAt: $appliedAt, up: $up, down: $down}';
   }
 
   /// A human-readable identifier for the migration. Used for debugging and logging.
