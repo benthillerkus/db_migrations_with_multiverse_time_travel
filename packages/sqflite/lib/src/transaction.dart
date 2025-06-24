@@ -96,7 +96,6 @@ class BackupTransactionDelegate extends Transactor {
   Future<void> rollback(Database db) async {
     await db.close();
     if (db.path == ":memory:") return;
-    await _backupFile.copy(_dbFile.path);
-    await _backupFile.delete();
+    await _backupFile.rename(_dbFile.path);
   }
 }

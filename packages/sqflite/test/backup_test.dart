@@ -3,12 +3,12 @@ import 'package:sqflite_migrations_with_multiverse_time_travel/sqflite_migration
 import 'package:test/test.dart';
 import 'package:mutex/mutex.dart';
 
+/// Prevents concurrency issues with file creation / deletion
+final mutex = Mutex();
+
 void main() {
   late Database db;
   late SqfliteDatabase wrapper;
-
-  /// Prevents concurrency issues with file creation / deletion
-  final mutex = Mutex();
 
   setUpAll(() {
     sqfliteFfiInit();

@@ -88,7 +88,6 @@ class BackupTransactionDelegate extends Transactor {
   void rollback(CommonDatabase db) {
     db.dispose();
     if (_path == ':memory:') return;
-    _backupFile.copySync(_dbFile.path);
-    _backupFile.deleteSync();
+    _backupFile.renameSync(_dbFile.path);
   }
 }
