@@ -59,4 +59,12 @@ void main() {
     expect(migration1 >= migration1, isTrue);
     expect(migration3 <= migration3, isTrue);
   });
+
+  test('Undo', () {
+    final migration = Migration<Symbol>(definedAt: DateTime.utc(2025, 3, 6), up: #up, down: #down);
+    final undoMigration = Migration.undo(definedAt: DateTime.utc(2025, 3, 9), migration: migration);
+
+    expect(undoMigration.up, migration.down);
+    expect(undoMigration.down, migration.up);
+  });
 }
