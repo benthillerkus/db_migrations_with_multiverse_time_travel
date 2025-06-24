@@ -65,20 +65,52 @@ void main() {
     expect(result, isNotEmpty);
   });
 
-  test("BackupTransaction", retry: 3, () {
-    if (File("test.db").existsSync()) {
-      File("test.db").deleteSync();
-    }
-    db = sqlite3.open("test.db");
-    wrapper = Sqlite3Database(db, transactor: BackupTransactionDelegate());
-    addTearDown(() {
-      db.dispose();
-      File("test.db").deleteSync();
+  group("BackupTransaction", retry: 3, () {
+    test("test.db", retry: 3, () {
+      if (File("test.db").existsSync()) {
+        File("test.db").deleteSync();
+      }
+      db = sqlite3.open("test.db");
+      wrapper = Sqlite3Database(db, transactor: BackupTransactionDelegate());
+      addTearDown(() {
+        db.dispose();
+        File("test.db").deleteSync();
+      });
+      db.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)"); // Should be included in the backup
+      var usersResult = db.select("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'users'");
+      expect(usersResult, isNotEmpty, reason: "The users table should be created before migration");
+
+      expect(() => wrapper.migrate(migrations), throwsA(isA<SqliteException>()));
+
+      db = sqlite3.open("test.db");
+      // Backup transaction should rollback, so the tbl table should not exist
+      final result = db.select("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'tbl'");
+      expect(result, isEmpty);
+      usersResult = db.select("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'users'");
+      expect(usersResult, isNotEmpty, reason: "The users table should exist after rollback");
     });
-    expect(() => wrapper.migrate(migrations), throwsA(isA<SqliteException>()));
-    db = sqlite3.open("test.db");
-    // Backup transaction should rollback, so the tbl table should not exist
-    final result = db.select("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'tbl'");
-    expect(result, isEmpty);
+
+    test(":memory:", () {
+      db = sqlite3.openInMemory();
+      wrapper = Sqlite3Database(db, transactor: BackupTransactionDelegate());
+      addTearDown(db.dispose);
+      addTearDown(() {
+        if (File("backup.db").existsSync()) {
+          File("backup.db").deleteSync();
+        }
+      });
+      db.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)"); // Should be included in the backup
+      var usersResult = db.select("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'users'");
+      expect(usersResult, isNotEmpty, reason: "The users table should be created before migration");
+
+      expect(() => wrapper.migrate(migrations), throwsA(isA<SqliteException>()));
+
+      // In memory cannot be opened again, but the backup file should be created and exist
+      db = sqlite3.open("backup.db");
+      final result = db.select("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'tbl'");
+      expect(result, isEmpty, reason: "The tbl table should not exist after rollback");
+      usersResult = db.select("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'users'");
+      expect(usersResult, isNotEmpty, reason: "The users table should exist after rollback");
+    });
   });
 }
