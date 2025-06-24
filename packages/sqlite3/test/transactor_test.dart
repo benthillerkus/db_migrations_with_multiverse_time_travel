@@ -112,5 +112,24 @@ void main() {
       usersResult = db.select("SELECT name FROM sqlite_master WHERE type = 'table' and name = 'users'");
       expect(usersResult, isNotEmpty, reason: "The users table should exist after rollback");
     });
+
+    test("Can cleanup existing backup file", () {
+      db = sqlite3.openInMemory();
+      wrapper = Sqlite3Database(db, transactor: BackupTransactionDelegate(backupFileName: "backup2.db"));
+
+      final file = File("backup2.db")..writeAsStringSync("This is a test backup file.");
+
+      addTearDown(() {
+        db.dispose();
+        if (file.existsSync()) {
+          file.deleteSync();
+        }
+      });
+
+      expect(file.readAsStringSync(), "This is a test backup file.");
+      wrapper.beginTransaction();
+      expect(() => file.readAsStringSync(), throwsA(isA<FileSystemException>()),
+          reason: "The existing backup file should have been overwritten by the database");
+    });
   });
 }

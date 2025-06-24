@@ -70,12 +70,12 @@ class BackupTransactionDelegate extends Transactor {
 
   @override
   Future<void> begin(Database db) async {
-    if (db.path == ":memory:") {
-      return db.execute("VACUUM INTO '$backupFileName';");
+    if (db.path.isEmpty || db.path == ':memory:') {
+      _backupFile = File(backupFileName);
+    } else {
+      _dbFile = File(db.path);
+      _backupFile = File('${_dbFile.parent.path}/$backupFileName');
     }
-    _dbFile = File(db.path);
-    _backupFile = File.fromUri(_dbFile.uri.replace(
-        pathSegments: _dbFile.uri.pathSegments.take(_dbFile.uri.pathSegments.length - 2).followedBy([backupFileName])));
     if (await _backupFile.exists()) {
       await _backupFile.delete();
     }
@@ -95,7 +95,7 @@ class BackupTransactionDelegate extends Transactor {
   @override
   Future<void> rollback(Database db) async {
     await db.close();
-    if (db.path == ":memory:") return;
+    if (db.path.isEmpty || db.path == ':memory:') return;
     await _backupFile.rename(_dbFile.path);
   }
 }

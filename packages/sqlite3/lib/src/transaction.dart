@@ -71,10 +71,11 @@ class BackupTransactionDelegate extends Transactor {
   void begin(CommonDatabase db) {
     _path = db.select("select file from pragma_database_list where name = 'main'").first.values.first! as String;
     if (_path.isEmpty || _path == ':memory:') {
-      db.execute("VACUUM INTO '$backupFileName';");
+      _backupFile = File(backupFileName);
+    } else {
+      _dbFile = File(_path);
+      _backupFile = File('${_dbFile.parent.path}/$backupFileName');
     }
-    _dbFile = File(_path);
-    _backupFile = File('${_dbFile.parent.path}/$backupFileName');
     if (_backupFile.existsSync()) {
       _backupFile.deleteSync();
     }
