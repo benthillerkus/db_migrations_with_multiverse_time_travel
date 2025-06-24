@@ -87,7 +87,7 @@ class BackupTransactionDelegate extends Transactor {
   @override
   void rollback(CommonDatabase db) {
     db.dispose();
-    if (_path.isEmpty ||_path == ':memory:') return;
+    if (_path.isEmpty || _path == ':memory:') return;
     _backupFile.renameSync(_dbFile.path);
   }
 }
