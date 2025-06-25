@@ -1,12 +1,21 @@
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
+import 'package:meta/meta.dart';
 import 'package:sqlite3/common.dart';
+
+import 'transaction.dart';
 
 /// A [SyncDatabase] implementation for SQLite3.
 class Sqlite3Database implements SyncDatabase<String> {
   /// Creates a new [Sqlite3Database] instance.
-  const Sqlite3Database(this._db);
+  const Sqlite3Database(
+    this._db, {
+    this.transactor = const TransactionDelegate(),
+  });
 
   final CommonDatabase _db;
+
+  /// Responsible for handling transactions
+  final Transactor transactor;
 
   @override
   void initializeMigrationsTable() {
@@ -30,6 +39,7 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
+  @internal
   Iterator<Migration<String>> retrieveAllMigrations() {
     return _db
         .select('''SELECT * FROM migrations ORDER BY defined_at ASC''')
@@ -50,6 +60,7 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
+  @internal
   void storeMigrations(List<Migration<String>> migrations) {
     final withAppliedAt = _db.prepare(
       "INSERT INTO migrations (defined_at, name, description, applied_at, up, down) VALUES (?, ?, ?, ?, ?, ?)",
@@ -84,6 +95,7 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
+  @internal
   void removeMigrations(List<Migration<String>> migrations) {
     final stmt = _db.prepare('''DELETE FROM migrations WHERE defined_at = ?''');
 
@@ -95,22 +107,20 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
+  @internal
   void performMigration(String migration) {
     _db.execute(migration);
   }
 
   @override
-  void beginTransaction() {
-    _db.execute('BEGIN TRANSACTION');
-  }
+  @internal
+  void beginTransaction() => transactor.begin(_db);
 
   @override
-  void commitTransaction() {
-    _db.execute('COMMIT TRANSACTION');
-  }
+  @internal
+  void commitTransaction() => transactor.commit(_db);
 
   @override
-  void rollbackTransaction() {
-    _db.execute('ROLLBACK TRANSACTION');
-  }
+  @internal
+  void rollbackTransaction() => transactor.rollback(_db);
 }
