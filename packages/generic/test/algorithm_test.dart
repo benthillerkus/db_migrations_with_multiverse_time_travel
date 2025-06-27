@@ -12,7 +12,7 @@ void main() {
 
   group("Sync", () {
     final eq = IterableEquality<EmptyMigration>();
-    final migrator = SyncMigrator<void, void>();
+    final migrator = SyncMigrator<Db, Symbol>();
 
     test("Empty", () {
       migrator.call(db: SyncMockDatabase(), defined: <EmptyMigration>[].iterator);
@@ -87,7 +87,7 @@ void main() {
   group("Async", () {
     final eq = IterableEquality<EmptyAsyncMigration>();
 
-    final migrator = AsyncMigrator<void, void>();
+    final migrator = AsyncMigrator<Db, Symbol>();
 
     test("Empty", () async {
       await migrator.call(db: AsyncMockDatabase(), defined: <EmptyAsyncMigration>[].iterator);
