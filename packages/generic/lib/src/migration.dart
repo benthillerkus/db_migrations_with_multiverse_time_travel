@@ -1,25 +1,23 @@
-//// {@template dmwmt.migration}
-/// A change to the database that can be applied and rolled back.
-///
-/// A migration is implemented as a simple data class that uses [definedAt] as the primary key.
-///
-/// Migrations have to be serialized and deserialized preserving atleast [definedAt] and [down]
-/// to be able to make [SyncMigrator] work.
-/// {endtemplate}
-class Migration<T> implements Comparable<Migration<T>> {
-  /// Creates a new migration data class instance.
-  ///
-  /// Make sure that [definedAt] is unique for each migration and represents the time the code was edited.
-  ///
-  /// Throws an [ArgumentError] if [definedAt] is not in UTC.
-  Migration({
+import 'dart:async';
+
+import 'package:meta/meta.dart';
+
+typedef SO<Serial> = ({Serial up, Serial down});
+typedef AO<Serial> = Future<SO<Serial>>;
+
+typedef SyncMigration<Db, Serial> = Migration<Db, Serial, SyncMigrationBuilder<Db, Serial>, SO<Serial>>;
+typedef StaticSyncMigration<Db, Serial> = StaticMigration<Db, Serial, SyncMigrationBuilder<Db, Serial>, SO<Serial>>;
+typedef AsyncMigration<Db, Serial> = Migration<Db, Serial, AsyncMigrationBuilder<Db, Serial>, AO<Serial>>;
+typedef StaticAsyncMigration<Db, Serial> = StaticMigration<Db, Serial, AsyncMigrationBuilder<Db, Serial>, AO<Serial>>;
+
+sealed class Migration<Db, Serial, B extends MaybeAsyncMigrationBuilder<Db, Serial, B, O>, O>
+    implements Comparable<Migration<Db, Serial, B, O>> {
+  Migration._({
     required DateTime definedAt,
     this.name,
     this.description,
     this.appliedAt,
     this.alwaysApply = false,
-    required this.up,
-    required this.down,
   }) : // Ensures that the DateTime is in UTC and also truncates the microseconds,
         // so that it's not a problem if microsecond precision is not supported by the database.
         definedAt = DateTime.fromMillisecondsSinceEpoch(
@@ -33,24 +31,44 @@ class Migration<T> implements Comparable<Migration<T>> {
           isUtc: true,
         );
 
-  /// Create a new [Migration] that undoes [migration]
+  factory Migration({
+    required DateTime definedAt,
+    String? name,
+    String? description,
+    DateTime? appliedAt,
+    bool alwaysApply,
+    required Serial up,
+    required Serial down,
+  }) = StaticMigration<Db, Serial, B, O>;
+
+  factory Migration.dynamic({
+    required DateTime definedAt,
+    String? name,
+    String? description,
+    DateTime? appliedAt,
+    bool alwaysApply,
+    required O Function(Db db) generate,
+  }) = MaybeAsyncMigrationBuilder<Db, Serial, B, O>.s;
+
+  /// Create a new [StaticMigration] that undoes [migration]
   /// by flipping its [up] and [down] fields.
-  Migration.undo({
+  factory Migration.undo({
     required DateTime definedAt,
     String? name,
     String? description,
     DateTime? appliedAt,
     bool alwaysApply = false,
-    required Migration<T> migration,
-  }) : this(
-          definedAt: definedAt,
-          name: name ?? (migration.name != null ? "Undo ${migration.name}" : null),
-          description: description,
-          appliedAt: appliedAt,
-          alwaysApply: alwaysApply,
-          up: migration.down,
-          down: migration.up,
-        );
+    required StaticMigration<Db, Serial, B, O> migration,
+  }) =>
+      StaticMigration<Db, Serial, B, O>(
+        definedAt: definedAt,
+        name: name ?? (migration.name != null ? "Undo ${migration.name}" : null),
+        description: description,
+        appliedAt: appliedAt,
+        alwaysApply: alwaysApply,
+        up: migration.down,
+        down: migration.up,
+      );
 
   /// The identity of the migration.
   ///
@@ -58,6 +76,7 @@ class Migration<T> implements Comparable<Migration<T>> {
   /// This should be updated whenever [up] or [down] are changed.
   ///
   /// This is the primary key of the migration when stored in a database.
+
   final DateTime definedAt;
 
   /// The name of the migration. Only used for documentation purposes.
@@ -81,6 +100,236 @@ class Migration<T> implements Comparable<Migration<T>> {
   /// but also may be incompatible with some states of the database during the migration.
   final bool alwaysApply;
 
+  /// A human-readable identifier for the migration. Used for debugging and logging.
+  String get humanReadableId => name ?? definedAt.toString();
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StaticMigration && runtimeType == other.runtimeType && definedAt.isAtSameMomentAs(other.definedAt);
+
+  @override
+  int get hashCode => definedAt.hashCode;
+
+  @override
+  int compareTo(Migration<Db, Serial, B, O> other) {
+    return definedAt.compareTo(other.definedAt);
+  }
+
+  /// Find out if this migration was defined before [other].
+  bool operator <(Migration<Db, Serial, B, O> other) {
+    return definedAt.isBefore(other.definedAt);
+  }
+
+  /// Find out if this migration was defined after [other].
+  bool operator >(Migration<Db, Serial, B, O> other) {
+    return definedAt.isAfter(other.definedAt);
+  }
+
+  /// Find out if this migration was defined before or at the same time as [other].
+  bool operator <=(Migration<Db, Serial, B, O> other) {
+    return definedAt.isBefore(other.definedAt) || definedAt.isAtSameMomentAs(other.definedAt);
+  }
+
+  /// Find out if this migration was defined after or at the same time as [other].
+  bool operator >=(Migration<Db, Serial, B, O> other) {
+    return definedAt.isAfter(other.definedAt) || definedAt.isAtSameMomentAs(other.definedAt);
+  }
+
+  Migration<Db, Serial, B, O> copyWith({
+    DateTime? definedAt,
+    String? name,
+    String? description,
+    DateTime? appliedAt,
+    bool? alwaysApply,
+  });
+
+  @override
+  String toString() {
+    return 'MigrationBase{definedAt: $definedAt, name: $name, description: $description, alwaysApply: $alwaysApply, appliedAt: $appliedAt}';
+  }
+
+  @internal
+  FutureOr<StaticMigration<Db, Serial, B, O>> build(Db db);
+}
+
+sealed class MaybeAsyncMigrationBuilder<Db, Serial, B extends MaybeAsyncMigrationBuilder<Db, Serial, B, O>, O>
+    extends Migration<Db, Serial, B, O> {
+  MaybeAsyncMigrationBuilder._({
+    required super.definedAt,
+    super.name,
+    super.description,
+    super.appliedAt,
+    super.alwaysApply,
+  }) : super._();
+
+  factory MaybeAsyncMigrationBuilder.s({
+    required DateTime definedAt,
+    String? name,
+    String? description,
+    DateTime? appliedAt,
+    bool alwaysApply = false,
+    required O Function(Db db) generate,
+  }) {
+    return switch (B) {
+      const (SyncMigrationBuilder) => SyncMigrationBuilder<Db, Serial>(
+          definedAt: definedAt,
+          name: name,
+          description: description,
+          appliedAt: appliedAt,
+          alwaysApply: alwaysApply,
+          generate: generate as SO<Serial> Function(Db db),
+        ),
+      const (AsyncMigrationBuilder) => AsyncMigrationBuilder<Db, Serial>(
+          definedAt: definedAt,
+          name: name,
+          description: description,
+          appliedAt: appliedAt,
+          alwaysApply: alwaysApply,
+          generate: generate as AO<Serial> Function(Db db),
+        ),
+      Type() => throw UnimplementedError(),
+    } as MaybeAsyncMigrationBuilder<Db, Serial, B, O>;
+  }
+}
+
+@internal
+final class SyncMigrationBuilder<Db, Serial>
+    extends MaybeAsyncMigrationBuilder<Db, Serial, SyncMigrationBuilder<Db, Serial>, SO<Serial>> {
+  /// Creates a new migration builder.
+  ///
+  /// This is used to build migrations dynamically, for example, when the migration code is generated
+  /// or when the migration is defined in a different way than the usual `up` and `down` methods.
+  SyncMigrationBuilder({
+    required super.definedAt,
+    super.name,
+    super.description,
+    super.appliedAt,
+    super.alwaysApply,
+    required this.generate,
+  }) : super._();
+
+  SO<Serial> Function(Db db) generate;
+
+  @override
+  StaticMigration<Db, Serial, SyncMigrationBuilder<Db, Serial>, SO<Serial>> build(Db db) {
+    final (:down, :up) = generate(db);
+    return StaticMigration<Db, Serial, SyncMigrationBuilder<Db, Serial>, SO<Serial>>(
+      definedAt: definedAt,
+      name: name,
+      description: description,
+      appliedAt: appliedAt,
+      alwaysApply: alwaysApply,
+      up: up,
+      down: down,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'MigrationBuilder{definedAt: $definedAt, name: $name, description: $description, alwaysApply: $alwaysApply, appliedAt: $appliedAt}';
+  }
+
+  @override
+  Migration<Db, Serial, SyncMigrationBuilder<Db, Serial>, SO<Serial>> copyWith(
+      {DateTime? definedAt,
+      String? name,
+      String? description,
+      DateTime? appliedAt,
+      bool? alwaysApply,
+      SO<Serial> Function(Db db)? generate}) {
+    return SyncMigrationBuilder<Db, Serial>(
+      definedAt: definedAt ?? this.definedAt,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      appliedAt: appliedAt ?? this.appliedAt,
+      alwaysApply: alwaysApply ?? this.alwaysApply,
+      generate: generate ?? this.generate,
+    );
+  }
+}
+
+@internal
+final class AsyncMigrationBuilder<Db, Serial>
+    extends MaybeAsyncMigrationBuilder<Db, Serial, AsyncMigrationBuilder<Db, Serial>, AO<Serial>> {
+  /// Creates a new migration builder.
+  ///
+  /// This is used to build migrations dynamically, for example, when the migration code is generated
+  /// or when the migration is defined in a different way than the usual `up` and `down` methods.
+  AsyncMigrationBuilder({
+    required super.definedAt,
+    super.name,
+    super.description,
+    super.appliedAt,
+    super.alwaysApply,
+    required this.generate,
+  }) : super._();
+
+  AO<Serial> Function(Db db) generate;
+
+  @override
+  Future<StaticMigration<Db, Serial, AsyncMigrationBuilder<Db, Serial>, AO<Serial>>> build(Db db) async {
+    final (:down, :up) = await generate(db);
+    return StaticMigration<Db, Serial, AsyncMigrationBuilder<Db, Serial>, AO<Serial>>(
+      definedAt: definedAt,
+      name: name,
+      description: description,
+      appliedAt: appliedAt,
+      alwaysApply: alwaysApply,
+      up: up,
+      down: down,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'AsyncMigrationBuilder{definedAt: $definedAt, name: $name, description: $description, alwaysApply: $alwaysApply, appliedAt: $appliedAt}';
+  }
+
+  @override
+  Migration<Db, Serial, AsyncMigrationBuilder<Db, Serial>, AO<Serial>> copyWith(
+      {DateTime? definedAt,
+      String? name,
+      String? description,
+      DateTime? appliedAt,
+      bool? alwaysApply,
+      AO<Serial> Function(Db db)? generate}) {
+    return AsyncMigrationBuilder<Db, Serial>(
+      definedAt: definedAt ?? this.definedAt,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      appliedAt: appliedAt ?? this.appliedAt,
+      alwaysApply: alwaysApply ?? this.alwaysApply,
+      generate: generate ?? this.generate,
+    );
+  }
+}
+
+//// {@template dmwmt.migration}
+/// A change to the database that can be applied and rolled back.
+///
+/// A migration is implemented as a simple data class that uses [definedAt] as the primary key.
+///
+/// Migrations have to be serialized and deserialized preserving atleast [definedAt] and [down]
+/// to be able to make [SyncMigrator] work.
+/// {endtemplate}
+class StaticMigration<Db, Serial, B extends MaybeAsyncMigrationBuilder<Db, Serial, B, F>, F>
+    extends Migration<Db, Serial, B, F> {
+  /// Creates a new migration data class instance.
+  ///
+  /// Make sure that [definedAt] is unique for each migration and represents the time the code was edited.
+  ///
+  /// Throws an [ArgumentError] if [definedAt] is not in UTC.
+  StaticMigration({
+    required super.definedAt,
+    super.name,
+    super.description,
+    super.appliedAt,
+    super.alwaysApply,
+    required this.up,
+    required this.down,
+  }) : super._();
+
   /// The migration to apply to the database.
   ///
   /// This could be a SQL string or a description of added and removed columns.
@@ -88,30 +337,28 @@ class Migration<T> implements Comparable<Migration<T>> {
   /// It should be able to be stored inside of the database.
   ///
   /// It's kept as a generic type since different databases might support storing different types of data.
-  final T up;
+  final Serial up;
 
   /// The migration to undo the changes made by [up].
-  final T down;
+  final Serial down;
 
   @override
   String toString() {
     return 'Migration{definedAt: $definedAt, name: $name, description: $description, alwaysApply: $alwaysApply, appliedAt: $appliedAt, up: $up, down: $down}';
   }
 
-  /// A human-readable identifier for the migration. Used for debugging and logging.
-  String get humanReadableId => name ?? definedAt.toString();
-
   /// Creates a copy of this migration with the given fields replaced with new values.
-  Migration<T> copyWith({
+  @override
+  StaticMigration<Db, Serial, B, F> copyWith({
     DateTime? definedAt,
     String? name,
     String? description,
     DateTime? appliedAt,
     bool? alwaysApply,
-    T? up,
-    T? down,
+    Serial? up,
+    Serial? down,
   }) {
-    return Migration<T>(
+    return StaticMigration<Db, Serial, B, F>(
       definedAt: definedAt ?? this.definedAt,
       name: name ?? this.name,
       description: description ?? this.description,
@@ -123,35 +370,5 @@ class Migration<T> implements Comparable<Migration<T>> {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Migration && runtimeType == other.runtimeType && definedAt.isAtSameMomentAs(other.definedAt);
-
-  @override
-  int get hashCode => definedAt.hashCode;
-
-  @override
-  int compareTo(Migration<T> other) {
-    return definedAt.compareTo(other.definedAt);
-  }
-
-  /// Find out if this migration was defined before [other].
-  bool operator <(Migration<T> other) {
-    return definedAt.isBefore(other.definedAt);
-  }
-
-  /// Find out if this migration was defined after [other].
-  bool operator >(Migration<T> other) {
-    return definedAt.isAfter(other.definedAt);
-  }
-
-  /// Find out if this migration was defined before or at the same time as [other].
-  bool operator <=(Migration<T> other) {
-    return definedAt.isBefore(other.definedAt) || definedAt.isAtSameMomentAs(other.definedAt);
-  }
-
-  /// Find out if this migration was defined after or at the same time as [other].
-  bool operator >=(Migration<T> other) {
-    return definedAt.isAfter(other.definedAt) || definedAt.isAtSameMomentAs(other.definedAt);
-  }
+  StaticMigration<Db, Serial, B, F> build(Db db) => this;
 }

@@ -1,10 +1,13 @@
-import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
+import 'dart:async';
+
+import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart'
+    hide AsyncMigration, StaticAsyncMigration, Migration, StaticMigration;
 import 'package:meta/meta.dart';
 import 'package:sqflite_common/sqlite_api.dart';
-import 'package:sqflite_migrations_with_multiverse_time_travel/src/transaction.dart';
+import 'package:sqflite_migrations_with_multiverse_time_travel/sqflite_migrations_with_multiverse_time_travel.dart';
 
 /// An [AsyncDatabase] implementation for SQLite.
-class SqfliteDatabase implements AsyncDatabase<String> {
+class SqfliteDatabase implements AsyncDatabase<Database, String> {
   /// Creates a new [SqfliteDatabase] instance.
   const SqfliteDatabase(
     this._db, {
@@ -49,13 +52,20 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
-  Future<void> performMigration(String migration) {
+  @internal
+  Future<void> execute(String migration) {
     return _db.execute(migration);
   }
 
   @override
   @internal
-  Future<void> removeMigrations(List<Migration<String>> migrations) {
+  FutureOr<T> executeRaw<T>(FutureOr<T> Function(Database db) action) {
+    return action(_db);
+  }
+
+  @override
+  @internal
+  Future<void> removeMigrations(List<Migration> migrations) {
     return Future.wait(migrations.map((migration) {
       return _db.execute('DELETE FROM migrations WHERE defined_at = ?', [migration.definedAt.millisecondsSinceEpoch]);
     }));
@@ -63,14 +73,14 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  Stream<Migration<String>> retrieveAllMigrations() async* {
+  Stream<StaticMigration> retrieveAllMigrations() async* {
     final cursor = await _db.rawQueryCursor("SELECT * FROM migrations ORDER BY defined_at ASC", []);
 
     try {
       while (true) {
         final hasRow = await cursor.moveNext();
         if (!hasRow) break;
-        yield Migration<String>(
+        yield StaticMigration(
           definedAt: DateTime.fromMillisecondsSinceEpoch(cursor.current['defined_at'] as int, isUtc: true),
           name: cursor.current['name'] as String?,
           description: cursor.current['description'] as String?,
@@ -90,7 +100,7 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  Future<void> storeMigrations(List<Migration<String>> migrations) {
+  Future<void> storeMigrations(List<StaticMigration> migrations) {
     return Future.wait(migrations.map((migration) {
       return _db.insert('migrations', {
         'defined_at': migration.definedAt.millisecondsSinceEpoch,

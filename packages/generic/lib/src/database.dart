@@ -9,7 +9,7 @@ import 'migration.dart';
 ///
 /// Implementations of this class should wrap a database library.
 /// {@endtemplate}
-abstract interface class MaybeAsyncDatabase<T> {
+abstract interface class MaybeAsyncDatabase<Db, Serial, B extends MaybeAsyncMigrationBuilder<Db, Serial, B, O>, O> {
   /// {@template dmwmt.database.initializeMigrationsTable}
   /// Creates a table in the database that can store migrations.
   /// {@endtemplate}
@@ -30,18 +30,22 @@ abstract interface class MaybeAsyncDatabase<T> {
   /// {@template dmwmt.database.storeMigrations}
   /// Writes a migration to the database.
   /// {@endtemplate}
-  FutureOr<void> storeMigrations(List<Migration<T>> migrations);
+  FutureOr<void> storeMigrations(List<StaticMigration<Db, Serial, B, O>> migrations);
 
   /// {@template dmwmt.database.removeMigrations}
   /// Removes a migration from the database.
   /// {@endtemplate}
-  FutureOr<void> removeMigrations(List<Migration<T>> migrations);
+  FutureOr<void> removeMigrations(List<Migration<Db, Serial, B, O>> migrations);
 
   /// {@template dmwmt.database.performMigration}
   /// Applies a migration to the database.
   /// {@endtemplate}
+  FutureOr<void> execute(Serial migration);
 
-  FutureOr<void> performMigration(T migration);
+  /// {@template dmwmt.database.db}
+  /// Uses the database to execute a raw action.
+  /// {@endtemplate}
+  FutureOr<T> executeRaw<T>(FutureOr<T> Function(Db db) action);
 
   /// {@template dmwmt.database.beginTransaction}
   /// Starts a transaction.
@@ -62,7 +66,8 @@ abstract interface class MaybeAsyncDatabase<T> {
 /// {@macro dmwmt.database}
 ///
 /// This is used for synchronous databases. For asynchronous databases, use [AsyncDatabase].
-abstract interface class SyncDatabase<T> implements MaybeAsyncDatabase<T> {
+abstract interface class SyncDatabase<Db, Serial>
+    implements MaybeAsyncDatabase<Db, Serial, SyncMigrationBuilder<Db, Serial>, SO<Serial>> {
   @override
   void initializeMigrationsTable();
 
@@ -70,16 +75,19 @@ abstract interface class SyncDatabase<T> implements MaybeAsyncDatabase<T> {
   bool isMigrationsTableInitialized();
 
   @override
-  Iterator<Migration<T>> retrieveAllMigrations();
+  Iterator<StaticSyncMigration<Db, Serial>> retrieveAllMigrations();
 
   @override
-  void storeMigrations(List<Migration<T>> migrations);
+  void storeMigrations(List<StaticSyncMigration<Db, Serial>> migrations);
 
   @override
-  void removeMigrations(List<Migration<T>> migrations);
+  void removeMigrations(List<SyncMigration<Db, Serial>> migrations);
 
   @override
-  void performMigration(T migration);
+  void execute(Serial serializedMigration);
+
+  @override
+  T executeRaw<T>(covariant T Function(Db db) action);
 
   @override
   void beginTransaction();
@@ -94,7 +102,8 @@ abstract interface class SyncDatabase<T> implements MaybeAsyncDatabase<T> {
 /// {@macro dmwmt.database}
 ///
 /// This is used for asynchronous databases. For synchronous databases, use [SyncDatabase].
-abstract interface class AsyncDatabase<T> implements MaybeAsyncDatabase<T> {
+abstract interface class AsyncDatabase<Db, Serial>
+    implements MaybeAsyncDatabase<Db, Serial, AsyncMigrationBuilder<Db, Serial>, AO<Serial>> {
   @override
-  Stream<Migration<T>> retrieveAllMigrations();
+  Stream<StaticMigration<Db, Serial, AsyncMigrationBuilder<Db, Serial>, AO<Serial>>> retrieveAllMigrations();
 }
