@@ -44,7 +44,7 @@ void main() {
           up: 'CREATE TABLE tbl (a TEXT)',
           down: 'DROP TABLE tbl',
         );
-        await wrapper.storeMigrations([migration]);
+        await wrapper.storeMigrations([migration as StaticMigration]);
 
         final result = await db.query('migrations');
         expect(result, hasLength(1));

@@ -10,15 +10,16 @@ void main() {
   });
 
   group("Sync", () {
-    final migrator = SyncMigrator<Symbol>();
+    final migrator = SyncMigrator<void, Symbol>();
 
     test("Some always apply", () {
       final defined = [
-        Migration(definedAt: DateTime.utc(2025, 3, 6), up: #migration1, down: #rollback1, alwaysApply: true),
-        Migration(definedAt: DateTime.utc(2025, 3, 7), up: #migration2, down: #rollback2, alwaysApply: false),
-        Migration(definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, alwaysApply: true),
+        StaticEmptyMigration(definedAt: DateTime.utc(2025, 3, 6), up: #migration1, down: #rollback1, alwaysApply: true),
+        StaticEmptyMigration(
+            definedAt: DateTime.utc(2025, 3, 7), up: #migration2, down: #rollback2, alwaysApply: false),
+        StaticEmptyMigration(definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, alwaysApply: true),
       ];
-      final db = SyncMockDatabase<Symbol>(defined);
+      final db = SyncMockDatabase(defined);
 
       migrator.call(db: db, defined: defined.iterator);
       expect(
@@ -27,15 +28,18 @@ void main() {
   });
 
   group("Async", () {
-    final migrator = AsyncMigrator<Symbol>();
+    final migrator = AsyncMigrator<void, Symbol>();
 
     test("Some always apply", () async {
       final defined = [
-        Migration(definedAt: DateTime.utc(2025, 3, 6), up: #migration1, down: #rollback1, alwaysApply: true),
-        Migration(definedAt: DateTime.utc(2025, 3, 7), up: #migration2, down: #rollback2, alwaysApply: false),
-        Migration(definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, alwaysApply: true),
+        StaticEmptyAsyncMigration(
+            definedAt: DateTime.utc(2025, 3, 6), up: #migration1, down: #rollback1, alwaysApply: true),
+        StaticEmptyAsyncMigration(
+            definedAt: DateTime.utc(2025, 3, 7), up: #migration2, down: #rollback2, alwaysApply: false),
+        StaticEmptyAsyncMigration(
+            definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, alwaysApply: true),
       ];
-      final db = AsyncMockDatabase<Symbol>(defined);
+      final db = AsyncMockDatabase(defined);
 
       await migrator.call(db: db, defined: defined.iterator);
       expect(

@@ -3,15 +3,22 @@ import 'dart:async';
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:logging/logging.dart';
 
-class MockDatabase<T> implements MaybeAsyncDatabase<T> {
-  MockDatabase([List<Migration<T>>? applied])
+typedef Db = void;
+typedef EmptyMigration = SyncMigration<Db, Symbol>;
+typedef StaticEmptyMigration = StaticSyncMigration<Db, Symbol>;
+typedef EmptyAsyncMigration = AsyncMigration<Db, Symbol>;
+typedef StaticEmptyAsyncMigration = StaticAsyncMigration<Db, Symbol>;
+
+class MockDatabase<B extends MaybeAsyncMigrationBuilder<Db, Symbol, B, O>, O>
+    implements MaybeAsyncDatabase<Db, Symbol, B, O> {
+  MockDatabase([List<StaticMigration<Db, Symbol, B, O>>? applied])
       : applied = applied ?? List.empty(growable: true),
         appliedForRollback = List.empty(growable: true),
         performedMigrations = List.empty(growable: true),
         migrationsTableInitialized = false,
         log = Logger('db.mock');
 
-  final List<Migration<T>> applied;
+  final List<StaticMigration<void, Symbol, B, O>> applied;
   final Logger log;
   bool migrationsTableInitialized;
 
@@ -24,34 +31,19 @@ class MockDatabase<T> implements MaybeAsyncDatabase<T> {
   bool isMigrationsTableInitialized() => migrationsTableInitialized;
 
   @override
-  FutureOr<void> performMigration(T migration) {
+  FutureOr<void> execute(Symbol migration) {
     log.info('performing migration', migration);
     performedMigrations.add(migration);
   }
 
-  List<T> performedMigrations;
+  List<Symbol> performedMigrations;
 
   @override
   dynamic retrieveAllMigrations() {
     return applied.iterator;
   }
 
-  @override
-  FutureOr<void> storeMigrations(List<Migration<T>> migration) {
-    applied.addAll(migration);
-  }
-
-  @override
-  FutureOr<void> removeMigrations(List<Migration<T>> migrations) {
-    for (final migration in migrations) {
-      log.fine('removing migration ${migration.humanReadableId} from database...');
-      if (!applied.remove(migration)) {
-        throw StateError('migration could not be removed: not found in database');
-      }
-    }
-  }
-
-  final List<Migration<T>> appliedForRollback;
+  final List<StaticMigration<Db, Symbol, B, O>> appliedForRollback;
 
   @override
   FutureOr<void> beginTransaction() {
@@ -70,22 +62,49 @@ class MockDatabase<T> implements MaybeAsyncDatabase<T> {
     applied.addAll(appliedForRollback);
     appliedForRollback.clear();
   }
-}
-
-class SyncMockDatabase<T> extends MockDatabase<T> implements SyncDatabase<T> {
-  SyncMockDatabase([super.applied]);
 
   @override
-  Iterator<Migration<T>> retrieveAllMigrations() {
-    return applied.iterator;
+  FutureOr<T> executeRaw<T>(FutureOr<T> Function(Db) action) {
+    return action(null);
+  }
+
+  @override
+  FutureOr<void> storeMigrations(List<StaticMigration<Db, Symbol, B, O>> migrations) {
+    applied.addAll(migrations);
+  }
+
+  @override
+  FutureOr<void> removeMigrations(List<Migration<Db, Symbol, B, O>> migrations) {
+    for (final migration in migrations) {
+      log.fine('removing migration ${migration.humanReadableId} from database...');
+      if (!applied.remove(migration)) {
+        throw StateError('migration could not be removed: not found in database');
+      }
+    }
   }
 }
 
-class AsyncMockDatabase<T> extends MockDatabase<T> implements AsyncDatabase<T> {
+class SyncMockDatabase extends MockDatabase<SyncMigrationBuilder<Db, Symbol>, SO<Symbol>>
+    implements SyncDatabase<Db, Symbol> {
+  SyncMockDatabase([super.applied]);
+
+  @override
+  Iterator<StaticEmptyMigration> retrieveAllMigrations() {
+    return applied.iterator;
+  }
+
+  @override
+  T executeRaw<T>(T Function(Db) action) {
+    return action(null);
+  }
+}
+
+class AsyncMockDatabase extends MockDatabase<AsyncMigrationBuilder<Db, Symbol>, AO<Symbol>>
+    implements AsyncDatabase<void, Symbol> {
   AsyncMockDatabase([super.applied]);
 
   @override
-  Stream<Migration<T>> retrieveAllMigrations() {
+  Stream<StaticEmptyAsyncMigration> retrieveAllMigrations() {
     return Stream.fromIterable(applied);
   }
 }

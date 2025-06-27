@@ -1,11 +1,11 @@
-import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
+import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart'
+    hide SyncMigration, StaticSyncMigration, Migration, StaticMigration;
 import 'package:meta/meta.dart';
 import 'package:sqlite3/common.dart';
-
-import 'transaction.dart';
+import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migrations_with_multiverse_time_travel.dart';
 
 /// A [SyncDatabase] implementation for SQLite3.
-class Sqlite3Database implements SyncDatabase<String> {
+class Sqlite3Database implements SyncDatabase<CommonDatabase, String> {
   /// Creates a new [Sqlite3Database] instance.
   const Sqlite3Database(
     this._db, {
@@ -40,14 +40,14 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  Iterator<Migration<String>> retrieveAllMigrations() {
+  Iterator<StaticMigration> retrieveAllMigrations() {
     return _db
         .select('''SELECT * FROM migrations ORDER BY defined_at ASC''')
         .rows
         .map((row) {
           final [definedAt, name, description, appliedAt, up, down] = row;
 
-          return Migration<String>(
+          return StaticMigration(
             definedAt: DateTime.fromMillisecondsSinceEpoch(definedAt as int, isUtc: true),
             name: name as String?,
             description: description as String?,
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  void storeMigrations(List<Migration<String>> migrations) {
+  void storeMigrations(List<StaticMigration> migrations) {
     final withAppliedAt = _db.prepare(
       "INSERT INTO migrations (defined_at, name, description, applied_at, up, down) VALUES (?, ?, ?, ?, ?, ?)",
     );
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  void removeMigrations(List<Migration<String>> migrations) {
+  void removeMigrations(List<Migration> migrations) {
     final stmt = _db.prepare('''DELETE FROM migrations WHERE defined_at = ?''');
 
     for (final migration in migrations) {
@@ -108,8 +108,14 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  void performMigration(String migration) {
+  void execute(String migration) {
     _db.execute(migration);
+  }
+
+  @override
+  @internal
+  T executeRaw<T>(T Function(CommonDatabase db) action) {
+    return action(_db);
   }
 
   @override

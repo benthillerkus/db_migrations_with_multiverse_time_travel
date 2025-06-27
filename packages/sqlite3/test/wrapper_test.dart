@@ -57,7 +57,7 @@ void main() {
           up: 'CREATE TABLE tbl (a TEXT)',
           down: 'DROP TABLE tbl',
         );
-        wrapper.storeMigrations([migration]);
+        wrapper.storeMigrations([migration as StaticMigration]);
 
         final result = db.select('SELECT * FROM migrations');
         expect(result, hasLength(1));
@@ -77,7 +77,7 @@ void main() {
               definedAt: DateTime.utc(1902, 1, 1),
               up: 'CREATE TABLE tbl (a TEXT)',
               down: 'DROP TABLE tbl',
-            ),
+            ) as StaticMigration,
           ]);
 
           final result = db.select('SELECT * FROM migrations');
