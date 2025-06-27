@@ -1,0 +1,15 @@
+targets:
+  $default:
+    builders:
+      maybe_async:
+        enabled: true
+
+builders:
+  maybe_async:
+    target: ":maybe_async"
+    import: "package:maybe_async/maybe_async_builder.dart"
+    build_extensions: { ".dart": [".g.dart"] }
+    builder_factories: ["maybeAsyncBuilder"]
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: ["source_gen|combining_builder"] 

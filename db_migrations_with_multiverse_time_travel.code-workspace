@@ -12,6 +12,12 @@
 		},
 		{
 			"path": "packages/sqflite"
+		},
+		{
+			"path": "packages/maybe_async"
+		},
+		{
+			"path": "packages/maybe_async_annotations"
 		}
 	],
 	"settings": {

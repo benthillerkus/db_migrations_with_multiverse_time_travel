@@ -1,3 +1,5 @@
+import 'package:maybe_async_annotations/maybe_async_annotations.dart';
+
 //// {@template dmwmt.migration}
 /// A change to the database that can be applied and rolled back.
 ///
@@ -6,7 +8,8 @@
 /// Migrations have to be serialized and deserialized preserving atleast [definedAt] and [down]
 /// to be able to make [SyncMigrator] work.
 /// {endtemplate}
-class Migration<T> implements Comparable<Migration<T>> {
+@maybeAsync
+class Migration<D, S> implements Comparable<Migration<D, S>> {
   /// Creates a new migration data class instance.
   ///
   /// Make sure that [definedAt] is unique for each migration and represents the time the code was edited.
@@ -18,9 +21,9 @@ class Migration<T> implements Comparable<Migration<T>> {
     this.description,
     this.appliedAt,
     this.alwaysApply = false,
-    required this.up,
-    required this.down,
-  }) : // Ensures that the DateTime is in UTC and also truncates the microseconds,
+    required S up,
+    required S down,
+  })  : // Ensures that the DateTime is in UTC and also truncates the microseconds,
         // so that it's not a problem if microsecond precision is not supported by the database.
         definedAt = DateTime.fromMillisecondsSinceEpoch(
           (() {
@@ -31,26 +34,33 @@ class Migration<T> implements Comparable<Migration<T>> {
           })()
               .millisecondsSinceEpoch,
           isUtc: true,
-        );
+        ),
+        _down = down,
+        _up = up,
+        _rendered = true,
+        _renderer = null;
 
-  /// Create a new [Migration] that undoes [migration]
-  /// by flipping its [up] and [down] fields.
-  Migration.undo({
+  Migration.dynamic({
     required DateTime definedAt,
-    String? name,
-    String? description,
-    DateTime? appliedAt,
-    bool alwaysApply = false,
-    required Migration<T> migration,
-  }) : this(
-          definedAt: definedAt,
-          name: name ?? (migration.name != null ? "Undo ${migration.name}" : null),
-          description: description,
-          appliedAt: appliedAt,
-          alwaysApply: alwaysApply,
-          up: migration.down,
-          down: migration.up,
-        );
+    this.name,
+    this.description,
+    this.appliedAt,
+    this.alwaysApply = false,
+    required MaybeFuture<({S up, S down})> Function(D db) renderer,
+  })  : // Ensures that the DateTime is in UTC and also truncates the microseconds,
+        // so that it's not a problem if microsecond precision is not supported by the database.
+        definedAt = DateTime.fromMillisecondsSinceEpoch(
+          (() {
+            if (!definedAt.isUtc) {
+              throw ArgumentError.value(definedAt, 'definedAt', 'must be in UTC');
+            }
+            return definedAt;
+          })()
+              .millisecondsSinceEpoch,
+          isUtc: true,
+        ),
+        _renderer = renderer,
+        _rendered = false;
 
   /// The identity of the migration.
   ///
@@ -81,6 +91,23 @@ class Migration<T> implements Comparable<Migration<T>> {
   /// but also may be incompatible with some states of the database during the migration.
   final bool alwaysApply;
 
+  bool _rendered;
+  bool get rendered => _rendered;
+
+  final MaybeFuture<({S up, S down})> Function(D db)? _renderer;
+
+  MaybeFuture<void> render(D db) {
+    if (_renderer == null) return MaybeFuture(null);
+    if (_rendered) {
+      throw StateError('Migration already rendered');
+    }
+    final result = _renderer(db);
+    _up = maybeAwait(result).up;
+    _down = maybeAwait(result).down;
+    _rendered = true;
+    return MaybeFuture(null);
+  }
+
   /// The migration to apply to the database.
   ///
   /// This could be a SQL string or a description of added and removed columns.
@@ -88,10 +115,12 @@ class Migration<T> implements Comparable<Migration<T>> {
   /// It should be able to be stored inside of the database.
   ///
   /// It's kept as a generic type since different databases might support storing different types of data.
-  final T up;
+  S get up => _rendered ? _up : throw StateError('Migration not yet rendered');
+  late final S _up;
 
   /// The migration to undo the changes made by [up].
-  final T down;
+  S get down => _rendered ? _down : throw StateError('Migration not yet rendered');
+  late final S _down;
 
   @override
   String toString() {
@@ -102,16 +131,16 @@ class Migration<T> implements Comparable<Migration<T>> {
   String get humanReadableId => name ?? definedAt.toString();
 
   /// Creates a copy of this migration with the given fields replaced with new values.
-  Migration<T> copyWith({
+  Migration<D, S> copyWith({
     DateTime? definedAt,
     String? name,
     String? description,
     DateTime? appliedAt,
     bool? alwaysApply,
-    T? up,
-    T? down,
+    S? up,
+    S? down,
   }) {
-    return Migration<T>(
+    return Migration<D, S>(
       definedAt: definedAt ?? this.definedAt,
       name: name ?? this.name,
       description: description ?? this.description,
@@ -131,27 +160,27 @@ class Migration<T> implements Comparable<Migration<T>> {
   int get hashCode => definedAt.hashCode;
 
   @override
-  int compareTo(Migration<T> other) {
+  int compareTo(Migration<D, S> other) {
     return definedAt.compareTo(other.definedAt);
   }
 
   /// Find out if this migration was defined before [other].
-  bool operator <(Migration<T> other) {
+  bool operator <(Migration<D, S> other) {
     return definedAt.isBefore(other.definedAt);
   }
 
   /// Find out if this migration was defined after [other].
-  bool operator >(Migration<T> other) {
+  bool operator >(Migration<D, S> other) {
     return definedAt.isAfter(other.definedAt);
   }
 
   /// Find out if this migration was defined before or at the same time as [other].
-  bool operator <=(Migration<T> other) {
+  bool operator <=(Migration<D, S> other) {
     return definedAt.isBefore(other.definedAt) || definedAt.isAtSameMomentAs(other.definedAt);
   }
 
   /// Find out if this migration was defined after or at the same time as [other].
-  bool operator >=(Migration<T> other) {
+  bool operator >=(Migration<D, S> other) {
     return definedAt.isAfter(other.definedAt) || definedAt.isAtSameMomentAs(other.definedAt);
   }
 }

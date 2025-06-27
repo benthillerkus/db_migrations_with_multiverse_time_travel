@@ -3,15 +3,17 @@ import 'dart:async';
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:logging/logging.dart';
 
-class MockDatabase<T> implements MaybeAsyncDatabase<T> {
-  MockDatabase([List<Migration<T>>? applied])
+typedef Mig = Migration<Null, Symbol>;
+
+class MockDatabase implements MaybeAsyncDatabase<Null, Symbol> {
+  MockDatabase([List<Mig>? applied])
       : applied = applied ?? List.empty(growable: true),
         appliedForRollback = List.empty(growable: true),
         performedMigrations = List.empty(growable: true),
         migrationsTableInitialized = false,
         log = Logger('db.mock');
 
-  final List<Migration<T>> applied;
+  final List<Mig> applied;
   final Logger log;
   bool migrationsTableInitialized;
 
@@ -24,12 +26,12 @@ class MockDatabase<T> implements MaybeAsyncDatabase<T> {
   bool isMigrationsTableInitialized() => migrationsTableInitialized;
 
   @override
-  FutureOr<void> performMigration(T migration) {
+  FutureOr<void> performMigration(Symbol migration) {
     log.info('performing migration', migration);
     performedMigrations.add(migration);
   }
 
-  List<T> performedMigrations;
+  List<Symbol> performedMigrations;
 
   @override
   dynamic retrieveAllMigrations() {
@@ -37,12 +39,12 @@ class MockDatabase<T> implements MaybeAsyncDatabase<T> {
   }
 
   @override
-  FutureOr<void> storeMigrations(List<Migration<T>> migration) {
+  FutureOr<void> storeMigrations(List<Mig> migration) {
     applied.addAll(migration);
   }
 
   @override
-  FutureOr<void> removeMigrations(List<Migration<T>> migrations) {
+  FutureOr<void> removeMigrations(List<Mig> migrations) {
     for (final migration in migrations) {
       log.fine('removing migration ${migration.humanReadableId} from database...');
       if (!applied.remove(migration)) {
@@ -51,7 +53,7 @@ class MockDatabase<T> implements MaybeAsyncDatabase<T> {
     }
   }
 
-  final List<Migration<T>> appliedForRollback;
+  final List<Mig> appliedForRollback;
 
   @override
   FutureOr<void> beginTransaction() {
@@ -72,20 +74,20 @@ class MockDatabase<T> implements MaybeAsyncDatabase<T> {
   }
 }
 
-class SyncMockDatabase<T> extends MockDatabase<T> implements SyncDatabase<T> {
+class SyncMockDatabase extends MockDatabase implements SyncDatabase<Null, Symbol> {
   SyncMockDatabase([super.applied]);
 
   @override
-  Iterator<Migration<T>> retrieveAllMigrations() {
+  Iterator<Mig> retrieveAllMigrations() {
     return applied.iterator;
   }
 }
 
-class AsyncMockDatabase<T> extends MockDatabase<T> implements AsyncDatabase<T> {
+class AsyncMockDatabase extends MockDatabase implements AsyncDatabase<Null, Symbol> {
   AsyncMockDatabase([super.applied]);
 
   @override
-  Stream<Migration<T>> retrieveAllMigrations() {
+  Stream<Mig> retrieveAllMigrations() {
     return Stream.fromIterable(applied);
   }
 }

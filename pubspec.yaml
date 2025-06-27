@@ -9,3 +9,5 @@ workspace:
   - packages/generic
   - packages/sqlite3
   - packages/sqflite
+  - packages/maybe_async
+  - packages/maybe_async_annotations

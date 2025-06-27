@@ -9,7 +9,7 @@ import 'migration.dart';
 ///
 /// Implementations of this class should wrap a database library.
 /// {@endtemplate}
-abstract interface class MaybeAsyncDatabase<T> {
+abstract interface class MaybeAsyncDatabase<D, T> {
   /// {@template dmwmt.database.initializeMigrationsTable}
   /// Creates a table in the database that can store migrations.
   /// {@endtemplate}
@@ -30,12 +30,12 @@ abstract interface class MaybeAsyncDatabase<T> {
   /// {@template dmwmt.database.storeMigrations}
   /// Writes a migration to the database.
   /// {@endtemplate}
-  FutureOr<void> storeMigrations(List<Migration<T>> migrations);
+  FutureOr<void> storeMigrations(List<Migration<D, T>> migrations);
 
   /// {@template dmwmt.database.removeMigrations}
   /// Removes a migration from the database.
   /// {@endtemplate}
-  FutureOr<void> removeMigrations(List<Migration<T>> migrations);
+  FutureOr<void> removeMigrations(List<Migration<D, T>> migrations);
 
   /// {@template dmwmt.database.performMigration}
   /// Applies a migration to the database.
@@ -62,7 +62,7 @@ abstract interface class MaybeAsyncDatabase<T> {
 /// {@macro dmwmt.database}
 ///
 /// This is used for synchronous databases. For asynchronous databases, use [AsyncDatabase].
-abstract interface class SyncDatabase<T> implements MaybeAsyncDatabase<T> {
+abstract interface class SyncDatabase<D, T> implements MaybeAsyncDatabase<D, T> {
   @override
   void initializeMigrationsTable();
 
@@ -70,13 +70,13 @@ abstract interface class SyncDatabase<T> implements MaybeAsyncDatabase<T> {
   bool isMigrationsTableInitialized();
 
   @override
-  Iterator<Migration<T>> retrieveAllMigrations();
+  Iterator<Migration<D, T>> retrieveAllMigrations();
 
   @override
-  void storeMigrations(List<Migration<T>> migrations);
+  void storeMigrations(List<Migration<D, T>> migrations);
 
   @override
-  void removeMigrations(List<Migration<T>> migrations);
+  void removeMigrations(List<Migration<D, T>> migrations);
 
   @override
   void performMigration(T migration);
@@ -94,7 +94,7 @@ abstract interface class SyncDatabase<T> implements MaybeAsyncDatabase<T> {
 /// {@macro dmwmt.database}
 ///
 /// This is used for asynchronous databases. For synchronous databases, use [SyncDatabase].
-abstract interface class AsyncDatabase<T> implements MaybeAsyncDatabase<T> {
+abstract interface class AsyncDatabase<D, T> implements MaybeAsyncDatabase<D, T> {
   @override
-  Stream<Migration<T>> retrieveAllMigrations();
+  Stream<Migration<D, T>> retrieveAllMigrations();
 }

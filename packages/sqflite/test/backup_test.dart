@@ -114,7 +114,12 @@ delete from farmers where 'name'='bob';
     await expectLater(db.query('sheep', where: "name = 'hank'"), completion(hasLength(1)));
 
     final migrations2 = [
-      Migration.undo(definedAt: DateTime.utc(2010), migration: migrations.last),
+      Migration(
+        definedAt: DateTime.utc(2008),
+        name: 'remove hank',
+        up: "delete from sheep where name = 'hank';",
+        down: "insert into sheep ('name', 'farmer_id') values ('hank', 0);",
+      ),
       Migration(
         definedAt: DateTime.utc(2011),
         name: 'faulty migration',

@@ -4,7 +4,7 @@ import 'package:sqflite_common/sqlite_api.dart';
 import 'package:sqflite_migrations_with_multiverse_time_travel/src/transaction.dart';
 
 /// An [AsyncDatabase] implementation for SQLite.
-class SqfliteDatabase implements AsyncDatabase<String> {
+class SqfliteDatabase implements AsyncDatabase<Database, String> {
   /// Creates a new [SqfliteDatabase] instance.
   const SqfliteDatabase(
     this._db, {
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  Future<void> removeMigrations(List<Migration<String>> migrations) {
+  Future<void> removeMigrations(List<Migration<Database, String>> migrations) {
     return Future.wait(migrations.map((migration) {
       return _db.execute('DELETE FROM migrations WHERE defined_at = ?', [migration.definedAt.millisecondsSinceEpoch]);
     }));
@@ -63,14 +63,14 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  Stream<Migration<String>> retrieveAllMigrations() async* {
+  Stream<Migration<Database, String>> retrieveAllMigrations() async* {
     final cursor = await _db.rawQueryCursor("SELECT * FROM migrations ORDER BY defined_at ASC", []);
 
     try {
       while (true) {
         final hasRow = await cursor.moveNext();
         if (!hasRow) break;
-        yield Migration<String>(
+        yield Migration<Database, String>(
           definedAt: DateTime.fromMillisecondsSinceEpoch(cursor.current['defined_at'] as int, isUtc: true),
           name: cursor.current['name'] as String?,
           description: cursor.current['description'] as String?,
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  Future<void> storeMigrations(List<Migration<String>> migrations) {
+  Future<void> storeMigrations(List<Migration<Database, String>> migrations) {
     return Future.wait(migrations.map((migration) {
       return _db.insert('migrations', {
         'defined_at': migration.definedAt.millisecondsSinceEpoch,
