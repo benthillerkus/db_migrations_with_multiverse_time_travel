@@ -40,4 +40,24 @@ void main() {
     expect(mig.up, 'up');
     expect(mig.down, 'down');
   });
+
+  test("Initializing twice is forbidden", () {
+    final mig = SyncMigration<void, String>.deferred(
+      definedAt: DateTime.utc(2025, 3, 6),
+      builder: (_) => (up: 'up', down: 'down'),
+    );
+
+    mig.buildInstructions(null);
+
+    expect(() => mig.buildInstructions(null), throwsA(isA<AlreadyInitializedMigrationError>()));
+  });
+
+  test("Cannot call copyWith on uninitialized deferred migration", () {
+    final mig = SyncMigration<void, String>.deferred(
+      definedAt: DateTime.utc(2025, 3, 6),
+      builder: (_) => (up: 'up', down: 'down'),
+    );
+
+    expect(() => mig.copyWith(appliedAt: DateTime.utc(2070)), throwsA(isA<UninitializedMigrationError>()));
+  });
 }

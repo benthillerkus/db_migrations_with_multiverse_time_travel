@@ -59,4 +59,12 @@ void main() {
     expect(migration1 >= migration1, isTrue);
     expect(migration3 <= migration3, isTrue);
   });
+
+  test('Copy with', () {
+    final migration2 = migration.copyWith(up: #newUp, down: #newDown);
+
+    expect(migration2.definedAt, migration.definedAt);
+    expect(migration2.up, #newUp);
+    expect(migration2.down, #newDown);
+  });
 }
