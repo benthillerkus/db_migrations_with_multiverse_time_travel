@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:sqflite_common/sqflite.dart';
+import 'package:sqflite_migrations_with_multiverse_time_travel/sqflite_migrations_with_multiverse_time_travel.dart';
 
 /// A delegate for handling database transactions.
 ///
@@ -10,13 +11,13 @@ abstract class Transactor {
   const Transactor();
 
   /// Begins a transaction on the provided [db].
-  Future<void> begin(Database db);
+  Future<void> begin(SqfliteDatabase db);
 
   /// Commits the transaction on the provided [db].
-  Future<void> commit(Database db);
+  Future<void> commit(SqfliteDatabase db);
 
   /// Rolls back the transaction on the provided [db].
-  Future<void> rollback(Database db);
+  Future<void> rollback(SqfliteDatabase db);
 }
 
 /// A [Transactor] that does not perform any transaction.
@@ -27,13 +28,13 @@ class NoTransactionDelegate extends Transactor {
   const NoTransactionDelegate();
 
   @override
-  Future<void> begin(Database db) => Future.value();
+  Future<void> begin(SqfliteDatabase db) => Future.value();
 
   @override
-  Future<void> commit(Database db) => Future.value();
+  Future<void> commit(SqfliteDatabase db) => Future.value();
 
   @override
-  Future<void> rollback(Database db) => Future.value();
+  Future<void> rollback(SqfliteDatabase db) => Future.value();
 }
 
 /// A [Transactor] that uses standard SQL transactions.
@@ -42,13 +43,13 @@ class TransactionDelegate extends Transactor {
   const TransactionDelegate();
 
   @override
-  Future<void> begin(Database db) => db.execute('BEGIN TRANSACTION');
+  Future<void> begin(SqfliteDatabase db) => db.executeInstructions('BEGIN TRANSACTION');
 
   @override
-  Future<void> commit(Database db) => db.execute('COMMIT TRANSACTION');
+  Future<void> commit(SqfliteDatabase db) => db.executeInstructions('COMMIT TRANSACTION');
 
   @override
-  Future<void> rollback(Database db) => db.execute('ROLLBACK TRANSACTION');
+  Future<void> rollback(SqfliteDatabase db) => db.executeInstructions('ROLLBACK TRANSACTION');
 }
 
 /// A [Transactor] that creates a backup of the database that can be restored in case of a rollback.
@@ -65,37 +66,34 @@ class BackupTransactionDelegate extends Transactor {
 
   /// The name of the backup file that will be created in the same directory as the database file.
   final String backupFileName;
-  late final File _dbFile;
-  late final File _backupFile;
+  late File _dbFile;
+  late File _backupFile;
 
   @override
-  Future<void> begin(Database db) async {
-    if (db.path.isEmpty || db.path == ':memory:') {
+  Future<void> begin(SqfliteDatabase db) async {
+    final wrapped = await db.db;
+    if (wrapped.path.isEmpty || wrapped.path == ':memory:') {
       _backupFile = File(backupFileName);
     } else {
-      _dbFile = File(db.path);
+      _dbFile = File(wrapped.path);
       _backupFile = File('${_dbFile.parent.path}/$backupFileName');
     }
     if (await _backupFile.exists()) {
       await _backupFile.delete();
     }
 
-    return db.execute("VACUUM INTO '${_backupFile.uri.toFilePath()}';");
+    return db.executeInstructions("VACUUM INTO '${_backupFile.uri.toFilePath()}';");
   }
 
   @override
-  Future<void> commit(Database db) {
-    // Close it here too despite not being necessary,
-    // to make sure that user code is able to handle
-    // the rollback case correctly, where there
-    // is no choice but to close the database.
-    return db.close();
-  }
+  Future<void> commit(SqfliteDatabase db) async {}
 
   @override
-  Future<void> rollback(Database db) async {
-    await db.close();
-    if (db.path.isEmpty || db.path == ':memory:') return;
+  Future<void> rollback(SqfliteDatabase db) async {
+    final wrapped = await db.db;
+    await wrapped.close();
+    if (wrapped.path.isEmpty || wrapped.path == ':memory:') return;
     await _backupFile.rename(_dbFile.path);
+    await db.reconnect();
   }
 }

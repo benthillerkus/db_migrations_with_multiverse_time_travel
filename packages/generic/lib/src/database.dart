@@ -39,7 +39,7 @@ abstract interface class MaybeAsyncDatabase<Db, Serial> {
   FutureOr<void> removeMigrations(covariant List<Migration<Db, Serial>> migrations);
 
   /// The wrapped database
-  Db get db;
+  FutureOr<Db> get db;
 
   /// {@template dmwmt.database.performMigration}
   /// Applies a migration to the database.
@@ -77,6 +77,9 @@ abstract interface class SyncDatabase<D, T> implements MaybeAsyncDatabase<D, T> 
 
   @override
   void storeMigrations(List<SyncMigration<D, T>> migrations);
+
+  @override
+  D get db;
 
   @override
   void removeMigrations(List<SyncMigration<D, T>> migrations);

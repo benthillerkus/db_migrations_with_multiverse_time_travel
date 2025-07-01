@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:meta/meta.dart';
 import 'package:sqflite_common/sqlite_api.dart';
@@ -6,32 +8,56 @@ import 'package:sqflite_migrations_with_multiverse_time_travel/src/transaction.d
 /// An [AsyncDatabase] implementation for SQLite.
 class SqfliteDatabase implements AsyncDatabase<Database, String> {
   /// Creates a new [SqfliteDatabase] instance.
-  const SqfliteDatabase(
-    this.db, {
+  ///
+  /// The [connect] function is used to establish a connection to the SQLite3 database,
+  /// see [SqfliteDatabase.reconnect].
+  SqfliteDatabase(
+    FutureOr<Database> Function(Database? oldConnection) connect, {
     this.transactor = const TransactionDelegate(),
-  });
+  }) : _connect = connect;
+
+  Database? _db;
 
   @override
-  final Database db;
+  FutureOr<Database> get db async => _db ??= await _connect(null);
+
+  /// {@macro time_travel.sqflite.reconnect}
+  ///
+  /// [oldConnection] is `null` when `connect` is called for the first time,
+  /// and the previous result of [connect] on subsequent calls.
+  final FutureOr<Database> Function(Database? oldConnection) _connect;
+
+  /// {@template time_travel.sqflite.reconnect}
+  /// Establishes a connection to the database.
+  ///
+  /// This can be called multiple times, for example,
+  /// when [BackUpTransactionDelegate] is used,
+  /// which can close the database connection.
+  ///
+  /// If you don't want to reconnect to the database,
+  /// you can just pass an existing connection.
+  /// {@endtemplate}
+  @internal
+  Future<void> reconnect() async => _db = await _connect(_db);
 
   /// Responsible for handling transactions
   final Transactor transactor;
 
   @override
   @internal
-  Future<void> beginTransaction() => transactor.begin(db);
+  Future<void> beginTransaction() => transactor.begin(this);
 
   @override
   @internal
-  Future<void> commitTransaction() => transactor.commit(db);
+  Future<void> commitTransaction() => transactor.commit(this);
 
   @override
   @internal
-  Future<void> rollbackTransaction() => transactor.rollback(db);
+  Future<void> rollbackTransaction() => transactor.rollback(this);
 
   @override
-  Future<void> initializeMigrationsTable() {
-    return db.execute('''
+  Future<void> initializeMigrationsTable() async {
+    return (await db).execute('''
 CREATE TABLE IF NOT EXISTS migrations (
   defined_at INTEGER PRIMARY KEY,
   name TEXT,
@@ -43,29 +69,30 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
-  Future<bool> isMigrationsTableInitialized() {
-    return db
+  Future<bool> isMigrationsTableInitialized() async {
+    return (await db)
         .rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='migrations' LIMIT 1")
         .then((result) => result.isNotEmpty);
   }
 
   @override
-  Future<void> executeInstructions(String sql) {
-    return db.execute(sql);
+  Future<void> executeInstructions(String sql) async {
+    return (await db).execute(sql);
   }
 
   @override
   @internal
   Future<void> removeMigrations(List<Migration<Database, String>> migrations) {
-    return Future.wait(migrations.map((migration) {
-      return db.execute('DELETE FROM migrations WHERE defined_at = ?', [migration.definedAt.millisecondsSinceEpoch]);
+    return Future.wait(migrations.map((migration) async {
+      return (await db)
+          .execute('DELETE FROM migrations WHERE defined_at = ?', [migration.definedAt.millisecondsSinceEpoch]);
     }));
   }
 
   @override
   @internal
   Stream<AsyncMigration<Database, String>> retrieveAllMigrations() async* {
-    final cursor = await db.rawQueryCursor("SELECT * FROM migrations ORDER BY defined_at ASC", []);
+    final cursor = await (await db).rawQueryCursor("SELECT * FROM migrations ORDER BY defined_at ASC", []);
 
     try {
       while (true) {
@@ -92,8 +119,8 @@ CREATE TABLE IF NOT EXISTS migrations (
   @override
   @internal
   Future<void> storeMigrations(covariant List<Migration<Database, String>> migrations) {
-    return Future.wait(migrations.map((migration) {
-      return db.insert('migrations', {
+    return Future.wait(migrations.map((migration) async {
+      return (await db).insert('migrations', {
         'defined_at': migration.definedAt.millisecondsSinceEpoch,
         'name': migration.name,
         'description': migration.description,

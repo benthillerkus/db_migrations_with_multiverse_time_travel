@@ -9,7 +9,7 @@ class Sqlite3Database implements SyncDatabase<CommonDatabase, String> {
   /// Creates a new [Sqlite3Database] instance.
   ///
   /// The [connect] function is used to establish a connection to the SQLite3 database,
-  /// see [CommonDatabase.reconnect].
+  /// see [Sqlite3Database.reconnect].
   Sqlite3Database(
     CommonDatabase Function(CommonDatabase? oldConnection) connect, {
     this.transactor = const TransactionDelegate(),

@@ -63,9 +63,9 @@ class BackupTransactionDelegate extends Transactor {
 
   /// The name of the backup file that will be created in the same directory as the database file.
   final String backupFileName;
-  late final String _path;
-  late final File _dbFile;
-  late final File _backupFile;
+  late String _path;
+  late File _dbFile;
+  late File _backupFile;
 
   @override
   void begin(Sqlite3Database db) {

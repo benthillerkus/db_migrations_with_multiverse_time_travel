@@ -448,7 +448,7 @@ class AsyncMigrator<D, T> {
         }
         if (!lastCommon.hasInstructions) {
           log.finest('building instructions for migration ${lastCommon.humanReadableId}');
-          await lastCommon.buildInstructions(_db!.db);
+          await lastCommon.buildInstructions(await _db!.db);
         }
         log.finer('applying always-apply migration ${lastCommon.humanReadableId}');
         await _db!.executeInstructions(lastCommon.up);
@@ -509,7 +509,7 @@ class AsyncMigrator<D, T> {
       log.finer('|_ - migration ${migration.humanReadableId}');
       if (!migration.hasInstructions) {
         log.finer('    [building instructions]');
-        await migration.buildInstructions(_db!.db);
+        await migration.buildInstructions(await _db!.db);
       }
       migration = migration.copyWith(appliedAt: now);
       await _db!.executeInstructions(migration.up);
