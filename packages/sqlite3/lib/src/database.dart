@@ -108,9 +108,8 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
-  @internal
-  void performMigration(String migration) {
-    db.execute(migration);
+  void executeInstructions(String sql) {
+    db.execute(sql);
   }
 
   @override

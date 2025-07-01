@@ -212,7 +212,7 @@ class SyncMigrator<D, T> {
           _inTransaction = true;
         }
         lastCommon.buildInstructions(_db!.db);
-        _db!.performMigration(lastCommon.up);
+        _db!.executeInstructions(lastCommon.up);
       }
       _moveNextDefined();
       _moveNextApplied();
@@ -253,7 +253,7 @@ class SyncMigrator<D, T> {
 
     for (final migration in toRollback) {
       log.finer('|_ - migration ${migration.humanReadableId}');
-      _db!.performMigration(migration.down);
+      _db!.executeInstructions(migration.down);
     }
     log.finest('updating applied migrations database table...');
     _db!.removeMigrations(toRollback);
@@ -282,7 +282,7 @@ class SyncMigrator<D, T> {
       final migration = _defined!.current.copyWith(appliedAt: now);
       log.finer('|_ + migration ${migration.humanReadableId}');
       migration.buildInstructions(_db!.db);
-      _db!.performMigration(migration.up);
+      _db!.executeInstructions(migration.up);
       toApply.add(migration);
       _moveNextDefined();
     }
@@ -439,7 +439,7 @@ class AsyncMigrator<D, T> {
           _inTransaction = true;
         }
         lastCommon.buildInstructions(_db!.db);
-        await _db!.performMigration(lastCommon.up);
+        await _db!.executeInstructions(lastCommon.up);
       }
       _moveNextDefined();
       await _moveNextApplied();
@@ -474,7 +474,7 @@ class AsyncMigrator<D, T> {
 
     for (final migration in toRollback) {
       log.finer('|_ - migration ${migration.humanReadableId}');
-      await _db!.performMigration(migration.down);
+      await _db!.executeInstructions(migration.down);
     }
     log.finest('updating applied migrations database table...');
     await _db!.removeMigrations(toRollback);
@@ -496,7 +496,7 @@ class AsyncMigrator<D, T> {
       final migration = _defined!.current.copyWith(appliedAt: now);
       log.finer('|_ + migration ${migration.humanReadableId}');
       migration.buildInstructions(_db!.db);
-      await _db!.performMigration(migration.up);
+      await _db!.executeInstructions(migration.up);
       toApply.add(migration);
       _moveNextDefined();
     }

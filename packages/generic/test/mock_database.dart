@@ -32,7 +32,7 @@ class SyncMockDatabase implements SyncDatabase<Null, Symbol> {
   bool isMigrationsTableInitialized() => migrationsTableInitialized;
 
   @override
-  void performMigration(Symbol migration) {
+  void executeInstructions(Symbol migration) {
     log.info('performing migration', migration);
     performedMigrations.add(migration);
   }
@@ -102,7 +102,7 @@ class AsyncMockDatabase implements AsyncDatabase<Null, Symbol> {
   bool isMigrationsTableInitialized() => migrationsTableInitialized;
 
   @override
-  Future<void> performMigration(Symbol migration) async {
+  Future<void> executeInstructions(Symbol migration) async {
     log.info('performing migration', migration);
     performedMigrations.add(migration);
   }

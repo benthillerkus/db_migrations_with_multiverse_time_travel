@@ -50,8 +50,8 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
-  Future<void> performMigration(String migration) {
-    return db.execute(migration);
+  Future<void> executeInstructions(String sql) {
+    return db.execute(sql);
   }
 
   @override

@@ -4,12 +4,13 @@ import 'migration.dart';
 
 /// {@template dmwmt.database}
 /// A database that can store and apply migrations.
-///
-/// The type parameter [T] is the type of the [Migration].
-///
+/// 
 /// Implementations of this class should wrap a database library.
+/// 
+/// [Db] is the type of the wrapped database,
+/// and [Serial] is the type of the migration instructions used by the database.
 /// {@endtemplate}
-abstract interface class MaybeAsyncDatabase<D, T> {
+abstract interface class MaybeAsyncDatabase<Db, Serial> {
   /// {@template dmwmt.database.initializeMigrationsTable}
   /// Creates a table in the database that can store migrations.
   /// {@endtemplate}
@@ -30,20 +31,20 @@ abstract interface class MaybeAsyncDatabase<D, T> {
   /// {@template dmwmt.database.storeMigrations}
   /// Writes a migration to the database.
   /// {@endtemplate}
-  FutureOr<void> storeMigrations(covariant List<Migration<D, T>> migrations);
+  FutureOr<void> storeMigrations(covariant List<Migration<Db, Serial>> migrations);
 
   /// {@template dmwmt.database.removeMigrations}
   /// Removes a migration from the database.
   /// {@endtemplate}
-  FutureOr<void> removeMigrations(covariant List<Migration<D, T>> migrations);
+  FutureOr<void> removeMigrations(covariant List<Migration<Db, Serial>> migrations);
 
   /// The wrapped database
-  D get db;
+  Db get db;
 
   /// {@template dmwmt.database.performMigration}
   /// Applies a migration to the database.
   /// {@endtemplate}
-  FutureOr<void> performMigration(T migration);
+  FutureOr<void> executeInstructions(Serial instructions);
 
   /// {@template dmwmt.database.beginTransaction}
   /// Starts a transaction.
@@ -81,7 +82,7 @@ abstract interface class SyncDatabase<D, T> implements MaybeAsyncDatabase<D, T> 
   void removeMigrations(List<SyncMigration<D, T>> migrations);
 
   @override
-  void performMigration(T migration);
+  void executeInstructions(T instructions);
 
   @override
   void beginTransaction();
