@@ -10,10 +10,9 @@ void main() {
     setUpLogging();
   });
 
-  final eq = IterableEquality<Migration<Null, void>>();
-
   group("Sync", () {
-    final migrator = SyncMigrator<Null, void>();
+    final migrator = SyncMigrator<Null, Symbol>();
+    final eq = IterableEquality<Mig>();
 
     test("Empty", () {
       migrator.call(db: SyncMockDatabase(), defined: <Mig>[].iterator);
@@ -87,6 +86,8 @@ void main() {
 
   group("Async", () {
     final migrator = AsyncMigrator<Null, Symbol>();
+    final eq = IterableEquality<AMig>();
+
 
     test("Empty", () async {
       await migrator.call(db: AsyncMockDatabase(), defined: <AMig>[].iterator);
@@ -135,7 +136,7 @@ void main() {
         AMig(definedAt: DateTime.utc(2025, 3, 8), up: #up, down: #down),
       ]);
 
-      await AsyncMigrator().call(db: db, defined: <AMig>[].iterator);
+      await AsyncMigrator<Null, Symbol>().call(db: db, defined: <AMig>[].iterator);
 
       expect(db.applied, isEmpty);
     });

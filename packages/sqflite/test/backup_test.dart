@@ -115,7 +115,7 @@ delete from farmers where 'name'='bob';
 
     final migrations2 = [
       Migration(
-        definedAt: DateTime.utc(2008),
+        definedAt: DateTime.utc(2009),
         name: 'remove hank',
         up: "delete from sheep where name = 'hank';",
         down: "insert into sheep ('name', 'farmer_id') values ('hank', 0);",

@@ -477,7 +477,7 @@ class AsyncMigrator<D, T> {
       await _db!.performMigration(migration.down);
     }
     log.finest('updating applied migrations database table...');
-    await _db!.removeMigrations(toRollback.cast());
+    await _db!.removeMigrations(toRollback);
   }
 
   /// {@macro dmwmt.migrator.applyRemainingDefinedMigrations}
@@ -501,7 +501,7 @@ class AsyncMigrator<D, T> {
       _moveNextDefined();
     }
     log.finest('updating applied migrations database table...');
-    await _db!.storeMigrations(toApply.cast());
+    await _db!.storeMigrations(toApply);
   }
 
   /// {@macro dmwmt.migrator}
