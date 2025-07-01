@@ -10,7 +10,7 @@ export 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_mul
 export 'src/database.dart';
 export 'src/transaction.dart';
 
-/// Typedef for [p.Migration] of [String].
+/// Typedef for [p.AsyncMigration] of [String].
 ///
 /// {@macro dmwmt.migration}
-typedef Migration = p.Migration<Database, String>;
+typedef Migration = p.AsyncMigration<Database, String>;

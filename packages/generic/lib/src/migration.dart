@@ -1,7 +1,4 @@
-import 'package:maybe_async_annotations/maybe_async_annotations.dart';
-import 'package:meta/meta.dart';
-
-part 'migration.g.dart';
+import 'dart:async';
 
 //// {@template dmwmt.migration}
 /// A change to the database that can be applied and rolled back.
@@ -11,9 +8,7 @@ part 'migration.g.dart';
 /// Migrations have to be serialized and deserialized preserving atleast [definedAt] and [down]
 /// to be able to make [SyncMigrator] work.
 /// {endtemplate}
-@maybeAsync
-@immutable
-class Migration<D, S> implements Comparable<Migration<D, S>> {
+sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
   /// Creates a new migration data class instance.
   ///
   /// Make sure that [definedAt] is unique for each migration and represents the time the code was edited.
@@ -44,13 +39,13 @@ class Migration<D, S> implements Comparable<Migration<D, S>> {
         _rendered = true,
         _renderer = null;
 
-  Migration.dynamic({
+  Migration.deferred({
     required DateTime definedAt,
     this.name,
     this.description,
     this.appliedAt,
     this.alwaysApply = false,
-    required MaybeFuture<({S up, S down})> Function(D db) renderer,
+    required FutureOr<({S up, S down})> Function(D db) renderer,
   })  : // Ensures that the DateTime is in UTC and also truncates the microseconds,
         // so that it's not a problem if microsecond precision is not supported by the database.
         definedAt = DateTime.fromMillisecondsSinceEpoch(
@@ -98,19 +93,9 @@ class Migration<D, S> implements Comparable<Migration<D, S>> {
   bool _rendered;
   bool get rendered => _rendered;
 
-  final MaybeFuture<({S up, S down})> Function(D db)? _renderer;
+  final FutureOr<({S up, S down})> Function(D db)? _renderer;
 
-  MaybeFuture<void> render(D db) {
-    if (_renderer == null) return MaybeFuture(null);
-    if (_rendered) {
-      throw StateError('Migration already rendered');
-    }
-    final result = _renderer(db);
-    _up = maybeAwait(result).up;
-    _down = maybeAwait(result).down;
-    _rendered = true;
-    return MaybeFuture(null);
-  }
+  FutureOr<void> render(D db);
 
   /// The migration to apply to the database.
   ///
@@ -143,17 +128,7 @@ class Migration<D, S> implements Comparable<Migration<D, S>> {
     bool? alwaysApply,
     S? up,
     S? down,
-  }) {
-    return Migration<D, S>(
-      definedAt: definedAt ?? this.definedAt,
-      name: name ?? this.name,
-      description: description ?? this.description,
-      appliedAt: appliedAt ?? this.appliedAt,
-      alwaysApply: alwaysApply ?? this.alwaysApply,
-      up: up ?? this.up,
-      down: down ?? this.down,
-    );
-  }
+  });
 
   @override
   bool operator ==(Object other) =>
@@ -186,5 +161,110 @@ class Migration<D, S> implements Comparable<Migration<D, S>> {
   /// Find out if this migration was defined after or at the same time as [other].
   bool operator >=(Migration<D, S> other) {
     return definedAt.isAfter(other.definedAt) || definedAt.isAtSameMomentAs(other.definedAt);
+  }
+}
+
+class SyncMigration<Db, Serial> extends Migration<Db, Serial> {
+  SyncMigration({
+    required DateTime definedAt,
+    String? name,
+    String? description,
+    DateTime? appliedAt,
+    bool alwaysApply = false,
+    required Serial up,
+    required Serial down,
+  }) : super(
+          definedAt: definedAt,
+          name: name,
+          description: description,
+          appliedAt: appliedAt,
+          alwaysApply: alwaysApply,
+          up: up,
+          down: down,
+        );
+
+  @override
+  SyncMigration<Db, Serial> copyWith(
+      {DateTime? definedAt,
+      String? name,
+      String? description,
+      DateTime? appliedAt,
+      bool? alwaysApply,
+      Serial? up,
+      Serial? down}) {
+    return SyncMigration<Db, Serial>(
+      definedAt: definedAt ?? this.definedAt,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      appliedAt: appliedAt ?? this.appliedAt,
+      alwaysApply: alwaysApply ?? this.alwaysApply,
+      up: up ?? this.up,
+      down: down ?? this.down,
+    );
+  }
+
+  @override
+  void render(Db db) {
+    if (_renderer == null) return;
+    if (_rendered) {
+      throw StateError('Migration already rendered');
+    }
+    final result = _renderer(db) as ({Serial up, Serial down});
+    _up = result.up;
+    _down = result.down;
+    _rendered = true;
+  }
+}
+
+class AsyncMigration<Db, Serial> extends Migration<Db, Serial> {
+  AsyncMigration({
+    required DateTime definedAt,
+    String? name,
+    String? description,
+    DateTime? appliedAt,
+    bool alwaysApply = false,
+    required Serial up,
+    required Serial down,
+  }) : super(
+          definedAt: definedAt,
+          name: name,
+          description: description,
+          appliedAt: appliedAt,
+          alwaysApply: alwaysApply,
+          up: up,
+          down: down,
+        );
+
+  @override
+  FutureOr<void> render(Db db) async {
+    if (_renderer == null) return Future.value();
+    if (_rendered) {
+      throw StateError('Migration already rendered');
+    }
+    final result = await _renderer(db);
+    _up = result.up;
+    _down = result.down;
+    _rendered = true;
+    return Future.value();
+  }
+
+  @override
+  AsyncMigration<Db, Serial> copyWith(
+      {DateTime? definedAt,
+      String? name,
+      String? description,
+      DateTime? appliedAt,
+      bool? alwaysApply,
+      Serial? up,
+      Serial? down}) {
+    return AsyncMigration<Db, Serial>(
+      definedAt: definedAt ?? this.definedAt,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      appliedAt: appliedAt ?? this.appliedAt,
+      alwaysApply: alwaysApply ?? this.alwaysApply,
+      up: up ?? this.up,
+      down: down ?? this.down,
+    );
   }
 }

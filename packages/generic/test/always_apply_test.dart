@@ -27,13 +27,13 @@ void main() {
   });
 
   group("Async", () {
-    final migrator = AsyncMigrator<void, Symbol>();
+    final migrator = AsyncMigrator<Null, Symbol>();
 
     test("Some always apply", () async {
       final defined = [
-        Mig(definedAt: DateTime.utc(2025, 3, 6), up: #migration1, down: #rollback1, alwaysApply: true),
-        Mig(definedAt: DateTime.utc(2025, 3, 7), up: #migration2, down: #rollback2, alwaysApply: false),
-        Mig(definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, alwaysApply: true),
+        AMig(definedAt: DateTime.utc(2025, 3, 6), up: #migration1, down: #rollback1, alwaysApply: true),
+        AMig(definedAt: DateTime.utc(2025, 3, 7), up: #migration2, down: #rollback2, alwaysApply: false),
+        AMig(definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, alwaysApply: true),
       ];
       final db = AsyncMockDatabase(defined);
 

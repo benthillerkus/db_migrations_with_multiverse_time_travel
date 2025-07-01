@@ -3,17 +3,20 @@ import 'dart:async';
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:logging/logging.dart';
 
-typedef Mig = Migration<Null, Symbol>;
+typedef Mig = SyncMigration<Null, Symbol>;
+typedef AMig = AsyncMigration<Null, Symbol>;
 
-class MockDatabase implements MaybeAsyncDatabase<Null, Symbol> {
-  MockDatabase([List<Mig>? applied])
-      : applied = applied ?? List.empty(growable: true),
-        appliedForRollback = List.empty(growable: true),
+abstract class MockDatabase implements MaybeAsyncDatabase<Null, Symbol> {
+  MockDatabase()
+      : appliedForRollback = List.empty(growable: true),
         performedMigrations = List.empty(growable: true),
         migrationsTableInitialized = false,
         log = Logger('db.mock');
 
-  final List<Mig> applied;
+  @override
+  Null db;
+
+  List<dynamic> get applied;
   final Logger log;
   bool migrationsTableInitialized;
 
@@ -39,12 +42,12 @@ class MockDatabase implements MaybeAsyncDatabase<Null, Symbol> {
   }
 
   @override
-  FutureOr<void> storeMigrations(List<Mig> migration) {
+  FutureOr<void> storeMigrations(List<Migration<Null, Symbol>> migration) {
     applied.addAll(migration);
   }
 
   @override
-  FutureOr<void> removeMigrations(List<Mig> migrations) {
+  FutureOr<void> removeMigrations(List<Migration<Null, Symbol>> migrations) {
     for (final migration in migrations) {
       log.fine('removing migration ${migration.humanReadableId} from database...');
       if (!applied.remove(migration)) {
@@ -53,12 +56,12 @@ class MockDatabase implements MaybeAsyncDatabase<Null, Symbol> {
     }
   }
 
-  final List<Mig> appliedForRollback;
+  final List<Migration<Null, Symbol>> appliedForRollback;
 
   @override
   FutureOr<void> beginTransaction() {
     appliedForRollback.clear();
-    appliedForRollback.addAll(applied);
+    appliedForRollback.addAll(applied.cast());
   }
 
   @override
@@ -75,7 +78,10 @@ class MockDatabase implements MaybeAsyncDatabase<Null, Symbol> {
 }
 
 class SyncMockDatabase extends MockDatabase implements SyncDatabase<Null, Symbol> {
-  SyncMockDatabase([super.applied]);
+  SyncMockDatabase([this.applied = const []]) : super();
+
+  @override
+  final List<Mig> applied;
 
   @override
   Iterator<Mig> retrieveAllMigrations() {
@@ -84,10 +90,13 @@ class SyncMockDatabase extends MockDatabase implements SyncDatabase<Null, Symbol
 }
 
 class AsyncMockDatabase extends MockDatabase implements AsyncDatabase<Null, Symbol> {
-  AsyncMockDatabase([super.applied]);
+  AsyncMockDatabase([this.applied = const []]) : super();
 
   @override
-  Stream<Mig> retrieveAllMigrations() {
-    return Stream.fromIterable(applied);
+  final List<AMig> applied;
+
+  @override
+  Stream<AsyncMigration<Null, Symbol>> retrieveAllMigrations() {
+    return Stream.fromIterable(applied.cast());
   }
 }
