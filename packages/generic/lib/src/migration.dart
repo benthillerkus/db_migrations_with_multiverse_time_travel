@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:meta/meta.dart';
 
 /// An error that is thrown trying to access [Migration.up] or [Migration.down]
-/// when the migration is not [Migration.initialized].
+/// when the migration is not [Migration.hasInstructions].
 class UninitializedMigrationError extends StateError {
   /// Creates an error that is thrown when a migration is not yet initialized.
   UninitializedMigrationError(this.migration)
@@ -31,6 +31,9 @@ class AlreadyInitializedMigrationError extends StateError {
 ///
 /// Migrations have to be serialized and deserialized preserving atleast [definedAt] and [down]
 /// to be able to make [SyncMigrator] work.
+/// 
+/// [D] is the type of the database that the migration is applied to.
+/// [S] is the type of the migration instructions (for example, a SQL string).
 /// {@endtemplate}
 sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
   /// {@template dmwmt.migration.anon}
@@ -62,8 +65,8 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
         ),
         _down = down,
         _up = up,
-        _initialized = true,
-        _renderer = null;
+        _hasInstructions = true,
+        _instructionBuilder = null;
 
   /// {@template dmwmt.migration.deferred}
   /// Creates a new migration data class instance that is not yet initialized.
@@ -76,9 +79,9 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
   /// manipulate the SQL string, than to copy paste the entire
   /// creation including all already made alterations again.
   ///
-  /// When using this constructor, you must call [initialize] before accessing [up] or [down].
+  /// When using this constructor, you must call [buildInstructions] before accessing [up] or [down].
   ///
-  /// When [initialize] is called, both [up] and [down] will be set.
+  /// When [buildInstructions] is called, both [up] and [down] will be set.
   /// This means effectively that a migration can be deferred
   /// in the app code, but when it is stored in the database,
   /// so that it can be rolled back, it will have been initialized.
@@ -89,7 +92,7 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
     this.description,
     this.appliedAt,
     this.alwaysApply = false,
-    required FutureOr<({S up, S down})> Function(D db) renderer,
+    required FutureOr<({S up, S down})> Function(D db) buildInstructions,
   })  : // Ensures that the DateTime is in UTC and also truncates the microseconds,
         // so that it's not a problem if microsecond precision is not supported by the database.
         definedAt = DateTime.fromMillisecondsSinceEpoch(
@@ -102,8 +105,8 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
               .millisecondsSinceEpoch,
           isUtc: true,
         ),
-        _renderer = renderer,
-        _initialized = false;
+        _instructionBuilder = buildInstructions,
+        _hasInstructions = false;
 
   /// The identity of the migration.
   ///
@@ -134,32 +137,32 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
   /// but also may be incompatible with some states of the database during the migration.
   final bool alwaysApply;
 
-  bool _initialized;
+  bool _hasInstructions;
 
-  /// Whether this migration has been [initialize]d.
+  /// Whether this migration has been [buildInstructions]d.
   ///
   /// When `true`, [up] and [down] are guaranteed to be set
   /// and can be accessed without throwing an [UninitializedMigrationError].
   ///
   /// This is `false` when the migration was created with [Migration.deferred].
   ///
-  /// Before calling [initialize] check [initialized],
+  /// Before calling [buildInstructions] check [hasInstructions],
   /// so that you don't accidentally call it twice.
-  bool get initialized => _initialized;
+  bool get hasInstructions => _hasInstructions;
 
-  final FutureOr<({S up, S down})> Function(D db)? _renderer;
+  final FutureOr<({S up, S down})> Function(D db)? _instructionBuilder;
 
   /// Initializes the migration by rendering the [up] and [down] migration
   /// instructions.
   ///
   /// Throws [AlreadyInitializedMigrationError] if this migration was already initialized.
   ///
-  /// To prevent this error, check [initialized] before calling this method.
+  /// To prevent this error, check [hasInstructions] before calling this method.
   @mustBeOverridden
   @mustCallSuper
-  FutureOr<void> initialize(D db) {
-    if (_initialized) throw AlreadyInitializedMigrationError(this);
-    if (_renderer == null) {
+  FutureOr<void> buildInstructions(D db) {
+    if (_hasInstructions) throw AlreadyInitializedMigrationError(this);
+    if (_instructionBuilder == null) {
       throw StateError(
           'Migration renderer is not set. Use Migration.deferred constructor to create a deferred migration.');
     }
@@ -172,11 +175,11 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
   /// It should be able to be stored inside of the database.
   ///
   /// It's kept as a generic type since different databases might support storing different types of data.
-  S get up => _initialized ? _up : throw UninitializedMigrationError(this);
+  S get up => _hasInstructions ? _up : throw UninitializedMigrationError(this);
   late final S _up;
 
   /// The migration to undo the changes made by [up].
-  S get down => _initialized ? _down : throw UninitializedMigrationError(this);
+  S get down => _hasInstructions ? _down : throw UninitializedMigrationError(this);
   late final S _down;
 
   @override
@@ -252,8 +255,8 @@ class SyncMigration<Db, Serial> extends Migration<Db, Serial> {
     super.description,
     super.appliedAt,
     super.alwaysApply,
-    required ({Serial up, Serial down}) Function(Db db) renderer,
-  }) : super.deferred(renderer: renderer);
+    required ({Serial up, Serial down}) Function(Db db) buildInstructions,
+  }) : super.deferred(buildInstructions: buildInstructions);
 
   @override
   SyncMigration<Db, Serial> copyWith({
@@ -277,12 +280,12 @@ class SyncMigration<Db, Serial> extends Migration<Db, Serial> {
   }
 
   @override
-  void initialize(Db db) {
-    super.initialize(db);
-    final result = _renderer!(db) as ({Serial up, Serial down});
+  void buildInstructions(Db db) {
+    super.buildInstructions(db);
+    final result = _instructionBuilder!(db) as ({Serial up, Serial down});
     _up = result.up;
     _down = result.down;
-    _initialized = true;
+    _hasInstructions = true;
   }
 }
 
@@ -306,16 +309,16 @@ class AsyncMigration<Db, Serial> extends Migration<Db, Serial> {
     super.description,
     super.appliedAt,
     super.alwaysApply,
-    required super.renderer,
+    required super.buildInstructions,
   }) : super.deferred();
 
   @override
-  FutureOr<void> initialize(Db db) async {
-    super.initialize(db);
-    final result = await _renderer!(db);
+  FutureOr<void> buildInstructions(Db db) async {
+    super.buildInstructions(db);
+    final result = await _instructionBuilder!(db);
     _up = result.up;
     _down = result.down;
-    _initialized = true;
+    _hasInstructions = true;
     return Future.value();
   }
 
