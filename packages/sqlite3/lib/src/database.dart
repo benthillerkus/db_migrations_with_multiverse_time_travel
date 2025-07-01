@@ -7,13 +7,37 @@ import 'transaction.dart';
 /// A [SyncDatabase] implementation for SQLite3.
 class Sqlite3Database implements SyncDatabase<CommonDatabase, String> {
   /// Creates a new [Sqlite3Database] instance.
-  const Sqlite3Database(
-    this.db, {
+  ///
+  /// The [connect] function is used to establish a connection to the SQLite3 database,
+  /// see [CommonDatabase.reconnect].
+  Sqlite3Database(
+    CommonDatabase Function(CommonDatabase? oldConnection) connect, {
     this.transactor = const TransactionDelegate(),
-  });
+  }) : _connect = connect;
+
+  CommonDatabase? _db;
 
   @override
-  final CommonDatabase db;
+  CommonDatabase get db => _db ??= _connect(null);
+
+  /// {@macro time_travel.sqlite3.reconnect}
+  ///
+  /// [oldConnection] is `null` when `connect` is called for the first time,
+  /// and the previous result of [connect] on subsequent calls.
+  final CommonDatabase Function(CommonDatabase? oldConnection) _connect;
+
+  /// {@template time_travel.sqlite3.reconnect}
+  /// Establishes a connection to the database.
+  ///
+  /// This can be called multiple times, for example,
+  /// when [BackUpTransactionDelegate] is used,
+  /// which can close the database connection.
+  ///
+  /// If you don't want to reconnect to the database,
+  /// you can just pass an existing connection.
+  /// {@endtemplate}
+  @internal
+  void reconnect() => _db = _connect(_db);
 
   /// Responsible for handling transactions
   final Transactor transactor;
@@ -114,13 +138,13 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  void beginTransaction() => transactor.begin(db);
+  void beginTransaction() => transactor.begin(this);
 
   @override
   @internal
-  void commitTransaction() => transactor.commit(db);
+  void commitTransaction() => transactor.commit(this);
 
   @override
   @internal
-  void rollbackTransaction() => transactor.rollback(db);
+  void rollbackTransaction() => transactor.rollback(this);
 }

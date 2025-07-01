@@ -25,7 +25,7 @@ void main() {
 
   setUp(() {
     db = sqlite3.openInMemory(vfs: vfs.name);
-    wrapper = Sqlite3Database(db);
+    wrapper = Sqlite3Database((_) => db);
   });
 
   tearDown(() {

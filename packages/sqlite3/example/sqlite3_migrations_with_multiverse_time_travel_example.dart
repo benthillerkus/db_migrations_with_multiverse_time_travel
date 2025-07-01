@@ -26,7 +26,7 @@ void main() {
   open.overrideFor(OperatingSystem.windows, () => DynamicLibrary.open('winsqlite3.dll'));
   final db = sqlite3.openInMemory();
 
-  Sqlite3Database(db).migrate(migrations);
+  Sqlite3Database((_) => db).migrate(migrations);
 
   for (final row in db.select('select * from users').rows) {
     print(row);

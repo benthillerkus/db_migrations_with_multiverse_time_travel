@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:sqlite3/common.dart';
+import 'database.dart';
 
 /// A delegate for handling database transactions.
 ///
@@ -10,13 +11,13 @@ abstract class Transactor {
   const Transactor();
 
   /// Begins a transaction on the provided [db].
-  void begin(CommonDatabase db);
+  void begin(Sqlite3Database db);
 
   /// Commits the transaction on the provided [db].
-  void commit(CommonDatabase db);
+  void commit(Sqlite3Database db);
 
   /// Rolls back the transaction on the provided [db].
-  void rollback(CommonDatabase db);
+  void rollback(Sqlite3Database db);
 }
 
 /// A [Transactor] that does not perform any transaction.
@@ -27,13 +28,13 @@ class NoTransactionDelegate extends Transactor {
   const NoTransactionDelegate();
 
   @override
-  void begin(CommonDatabase db) {}
+  void begin(Sqlite3Database db) {}
 
   @override
-  void commit(CommonDatabase db) {}
+  void commit(Sqlite3Database db) {}
 
   @override
-  void rollback(CommonDatabase db) {}
+  void rollback(Sqlite3Database db) {}
 }
 
 /// A [Transactor] that uses standard SQL transactions.
@@ -42,13 +43,13 @@ class TransactionDelegate extends Transactor {
   const TransactionDelegate();
 
   @override
-  void begin(CommonDatabase db) => db.execute('BEGIN TRANSACTION');
+  void begin(Sqlite3Database db) => db.executeInstructions('BEGIN TRANSACTION');
 
   @override
-  void commit(CommonDatabase db) => db.execute('COMMIT TRANSACTION');
+  void commit(Sqlite3Database db) => db.executeInstructions('COMMIT TRANSACTION');
 
   @override
-  void rollback(CommonDatabase db) => db.execute('ROLLBACK TRANSACTION');
+  void rollback(Sqlite3Database db) => db.executeInstructions('ROLLBACK TRANSACTION');
 }
 
 /// A [Transactor] that creates a backup of the database that can be restored in case of a rollback.
@@ -68,8 +69,8 @@ class BackupTransactionDelegate extends Transactor {
   late final File _backupFile;
 
   @override
-  void begin(CommonDatabase db) {
-    _path = db.select("select file from pragma_database_list where name = 'main'").first.values.first! as String;
+  void begin(Sqlite3Database db) {
+    _path = db.db.select("select file from pragma_database_list where name = 'main'").first.values.first! as String;
     if (_path.isEmpty || _path == ':memory:') {
       _backupFile = File(backupFileName);
     } else {
@@ -79,16 +80,17 @@ class BackupTransactionDelegate extends Transactor {
     if (_backupFile.existsSync()) {
       _backupFile.deleteSync();
     }
-    db.execute("VACUUM INTO '${_backupFile.path}';");
+    db.executeInstructions("VACUUM INTO '${_backupFile.path}';");
   }
 
   @override
-  void commit(CommonDatabase db) => db.dispose();
+  void commit(Sqlite3Database db) {}
 
   @override
-  void rollback(CommonDatabase db) {
-    db.dispose();
+  void rollback(Sqlite3Database db) {
+    db.db.dispose();
     if (_path.isEmpty || _path == ':memory:') return;
     _backupFile.renameSync(_dbFile.path);
+    db.reconnect();
   }
 }
