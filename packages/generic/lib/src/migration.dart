@@ -79,9 +79,9 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
   /// manipulate the SQL string, than to copy paste the entire
   /// creation including all already made alterations again.
   ///
-  /// When using this constructor, you must call [build] before accessing [up] or [down].
+  /// When using this constructor, you must call [builder] before accessing [up] or [down].
   ///
-  /// When [build] is called, both [up] and [down] will be set.
+  /// When [builder] is called, both [up] and [down] will be set.
   /// This means effectively that a migration can be deferred
   /// in the app code, but when it is stored in the database,
   /// so that it can be rolled back, it will have been initialized.
@@ -92,7 +92,7 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
     this.description,
     this.appliedAt,
     this.alwaysApply = false,
-    required FutureOr<({S up, S down})> Function(D db) build,
+    required FutureOr<({S up, S down})> Function(D db) builder,
   })  : // Ensures that the DateTime is in UTC and also truncates the microseconds,
         // so that it's not a problem if microsecond precision is not supported by the database.
         definedAt = DateTime.fromMillisecondsSinceEpoch(
@@ -105,7 +105,7 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
               .millisecondsSinceEpoch,
           isUtc: true,
         ),
-        _instructionBuilder = build,
+        _instructionBuilder = builder,
         _hasInstructions = false;
 
   /// The identity of the migration.
@@ -255,8 +255,8 @@ class SyncMigration<Db, Serial> extends Migration<Db, Serial> {
     super.description,
     super.appliedAt,
     super.alwaysApply,
-    required ({Serial up, Serial down}) Function(Db db) build,
-  }) : super.deferred(build: build);
+    required ({Serial up, Serial down}) Function(Db db) builder,
+  }) : super.deferred(builder: builder);
 
   @override
   SyncMigration<Db, Serial> copyWith({
@@ -309,7 +309,7 @@ class AsyncMigration<Db, Serial> extends Migration<Db, Serial> {
     super.description,
     super.appliedAt,
     super.alwaysApply,
-    required super.build,
+    required super.builder,
   }) : super.deferred();
 
   @override
