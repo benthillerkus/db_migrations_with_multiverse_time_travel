@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:sqlite3/common.dart';
 import 'database.dart';
 
 /// A delegate for handling database transactions.
