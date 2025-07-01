@@ -166,22 +166,14 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
 
 class SyncMigration<Db, Serial> extends Migration<Db, Serial> {
   SyncMigration({
-    required DateTime definedAt,
-    String? name,
-    String? description,
-    DateTime? appliedAt,
-    bool alwaysApply = false,
-    required Serial up,
-    required Serial down,
-  }) : super(
-          definedAt: definedAt,
-          name: name,
-          description: description,
-          appliedAt: appliedAt,
-          alwaysApply: alwaysApply,
-          up: up,
-          down: down,
-        );
+    required super.definedAt,
+    super.name,
+    super.description,
+    super.appliedAt,
+    super.alwaysApply,
+    required super.up,
+    required super.down,
+  });
 
   @override
   SyncMigration<Db, Serial> copyWith(
@@ -218,22 +210,14 @@ class SyncMigration<Db, Serial> extends Migration<Db, Serial> {
 
 class AsyncMigration<Db, Serial> extends Migration<Db, Serial> {
   AsyncMigration({
-    required DateTime definedAt,
-    String? name,
-    String? description,
-    DateTime? appliedAt,
-    bool alwaysApply = false,
-    required Serial up,
-    required Serial down,
-  }) : super(
-          definedAt: definedAt,
-          name: name,
-          description: description,
-          appliedAt: appliedAt,
-          alwaysApply: alwaysApply,
-          up: up,
-          down: down,
-        );
+    required super.definedAt,
+    super.name,
+    super.description,
+    super.appliedAt,
+    super.alwaysApply,
+    required super.up,
+    required super.down,
+  });
 
   @override
   FutureOr<void> render(Db db) async {

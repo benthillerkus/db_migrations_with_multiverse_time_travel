@@ -88,7 +88,6 @@ void main() {
     final migrator = AsyncMigrator<Null, Symbol>();
     final eq = IterableEquality<AMig>();
 
-
     test("Empty", () async {
       await migrator.call(db: AsyncMockDatabase(), defined: <AMig>[].iterator);
     });
