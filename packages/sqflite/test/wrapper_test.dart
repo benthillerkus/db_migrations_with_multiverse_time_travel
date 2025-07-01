@@ -3,20 +3,18 @@ import 'package:sqflite_migrations_with_multiverse_time_travel/sqflite_migration
 import 'package:test/test.dart';
 
 void main() {
-  late Database db;
   late SqfliteDatabase wrapper;
 
   setUpAll(() {
     sqfliteFfiInit();
   });
 
-  setUp(() async {
-    db = await databaseFactoryFfiNoIsolate.openDatabase(inMemoryDatabasePath);
-    wrapper = SqfliteDatabase(db);
+  setUp(() {
+    wrapper = SqfliteDatabase((_) => databaseFactoryFfiNoIsolate.openDatabase(inMemoryDatabasePath));
   });
 
   tearDown(() async {
-    await db.close();
+    await (await wrapper.db).close();
   });
 
   test('Initialize works', () async {
@@ -26,6 +24,7 @@ void main() {
 
   test('Initialize has table', () async {
     await wrapper.initializeMigrationsTable();
+    final db = await wrapper.db;
     expect(await db.rawQuery('select * from sqlite_master where type = "table" and name = "migrations"'), isNotEmpty);
   });
 
@@ -46,6 +45,7 @@ void main() {
         );
         await wrapper.storeMigrations([migration].cast());
 
+        final db = await wrapper.db;
         final result = await db.query('migrations');
         expect(result, hasLength(1));
         expect(result[0], containsPair('defined_at', migration.definedAt.millisecondsSinceEpoch));
@@ -79,6 +79,7 @@ DELETE FROM notes WHERE note IN ('is cool', 'sucks', 'is awesome');
       ];
 
       test('Basic', () async {
+        final db = await wrapper.db;
         await expectLater(() => db.query('notes'), throwsA(anything),
             reason: 'Database should not have notes table before migration');
 
@@ -93,6 +94,7 @@ DELETE FROM notes WHERE note IN ('is cool', 'sucks', 'is awesome');
           await wrapper.migrate(migrations);
 
           // Insert a note with a non-existing user_id
+          final db = await wrapper.db;
           await db.execute('INSERT INTO notes (note, user_id) VALUES (?, ?)', ['orphan note', 999]);
 
           final result = await db.query('notes');
@@ -101,6 +103,7 @@ DELETE FROM notes WHERE note IN ('is cool', 'sucks', 'is awesome');
 
         test("Throws when foreign keys are enforced", () async {
           await wrapper.migrate(migrations);
+          final db = await wrapper.db;
           await db.execute('PRAGMA foreign_keys = ON');
 
           await expectLater(
@@ -125,6 +128,7 @@ DELETE FROM notes WHERE note IN ('is cool', 'sucks', 'is awesome');
         );
 
         test("Setting and reading works", () async {
+          final db = await wrapper.db;
           await expectLater(db.rawQuery("PRAGMA foreign_keys"), completion(foreignKeysDisabled));
           await db.execute('PRAGMA foreign_keys = ON');
           await expectLater(db.rawQuery("PRAGMA foreign_keys"), completion(foreignKeysEnabled));
@@ -133,6 +137,7 @@ DELETE FROM notes WHERE note IN ('is cool', 'sucks', 'is awesome');
         });
 
         test("Noops inside of a transaction", () async {
+          final db = await wrapper.db;
           await db.transaction((txn) async {
             await expectLater(txn.rawQuery("PRAGMA foreign_keys"), completion(foreignKeysDisabled));
             await txn.execute('PRAGMA foreign_keys = ON');
@@ -148,7 +153,8 @@ DELETE FROM notes WHERE note IN ('is cool', 'sucks', 'is awesome');
       });
 
       test('With always apply', () async {
-        wrapper = SqfliteDatabase(db, transactor: NoTransactionDelegate());
+        final db = await wrapper.db;
+        wrapper = SqfliteDatabase((_) => db, transactor: NoTransactionDelegate());
         final migrations2 = <Migration>[
           Migration(name: 'Make orphan note', definedAt: DateTime.utc(2025, 6, 23, 12, 2), up: '''
 INSERT INTO notes (note, user_id) VALUES ('orphan note', 999);
