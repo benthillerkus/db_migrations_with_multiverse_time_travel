@@ -7,7 +7,6 @@ import 'package:mutex/mutex.dart';
 final mutex = Mutex();
 
 void main() {
-  late Database db;
   late SqfliteDatabase wrapper;
 
   setUpAll(() {
@@ -20,12 +19,12 @@ void main() {
     if (await databaseExists("test.db")) {
       await deleteDatabase("test.db");
     }
-    db = await openDatabase("test.db");
-    wrapper = SqfliteDatabase(db, transactor: BackupTransactionDelegate());
+    wrapper = SqfliteDatabase((_) => openDatabase("test.db"), transactor: BackupTransactionDelegate());
     await wrapper.initializeMigrationsTable();
   });
 
   tearDown(() async {
+    final db = await wrapper.db;
     await db.close();
     if (await databaseExists(db.path)) {
       await deleteDatabase(db.path);
@@ -58,10 +57,8 @@ delete from users;
     ];
     await wrapper.migrate(migrations);
 
-    expect(db.isOpen, isFalse);
-
-    db = await openDatabase(db.path);
-
+    final db = await wrapper.db;
+    expect(db.isOpen, isTrue);
     await expectLater(db.query('users'), completion(hasLength(2)));
   });
 
@@ -107,11 +104,9 @@ delete from farmers where 'name'='bob';
 
     await wrapper.migrate(migrations);
 
-    db = await openDatabase(db.path);
-    wrapper = SqfliteDatabase(db, transactor: BackupTransactionDelegate());
-
-    await expectLater(db.query('sheep'), completion(hasLength(2)));
-    await expectLater(db.query('sheep', where: "name = 'hank'"), completion(hasLength(1)));
+    await expectLater(Future(() async => (await wrapper.db).query('sheep')), completion(hasLength(2)));
+    await expectLater(
+        Future(() async => (await wrapper.db).query('sheep', where: "name = 'hank'")), completion(hasLength(1)));
 
     final migrations2 = [
       Migration(
@@ -130,22 +125,18 @@ delete from farmers where 'name'='bob';
 
     await expectLater(wrapper.migrate(migrations + migrations2), throwsA(anything));
 
-    db = await openDatabase(db.path);
-    wrapper = SqfliteDatabase(db, transactor: BackupTransactionDelegate());
-
     await expectLater(wrapper.retrieveAllMigrations().last, completion(migrations.last));
-    await expectLater(db.query('sheep'), completion(hasLength(2)));
-    await expectLater(db.query('sheep', where: "name = 'hank'"), completion(hasLength(1)));
+    await expectLater(Future(() async => (await wrapper.db).query('sheep')), completion(hasLength(2)));
+    await expectLater(
+        Future(() async => (await wrapper.db).query('sheep', where: "name = 'hank'")), completion(hasLength(1)));
 
     // And just to make sure that the deletion would have worked, if not for the faulty migration:
 
     await wrapper.migrate(migrations + [migrations2.first]);
 
-    db = await openDatabase(db.path);
-    wrapper = SqfliteDatabase(db, transactor: BackupTransactionDelegate());
-
     await expectLater(wrapper.retrieveAllMigrations().last, completion(migrations2.first));
-    await expectLater(db.query('sheep'), completion(hasLength(1)));
-    await expectLater(db.query('sheep', where: "name = 'hank'"), completion(isEmpty));
+    await expectLater(Future(() async => (await wrapper.db).query('sheep')), completion(hasLength(1)));
+    await expectLater(
+        Future(() async => (await wrapper.db).query('sheep', where: "name = 'hank'")), completion(isEmpty));
   });
 }

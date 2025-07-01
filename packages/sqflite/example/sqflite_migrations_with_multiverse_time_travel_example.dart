@@ -23,13 +23,13 @@ Future<void> main() async {
   sqfliteFfiInit();
 
   var databaseFactory = databaseFactoryFfi;
-  var db = await databaseFactory.openDatabase(inMemoryDatabasePath);
 
-  await SqfliteDatabase(db).migrate(migrations);
+  final wrapper = SqfliteDatabase((_) => databaseFactory.openDatabase(inMemoryDatabasePath));
+  await wrapper.migrate(migrations);
 
-  for (final row in await db.query('users')) {
+  for (final row in await (await wrapper.db).query('users')) {
     print(row);
   }
 
-  await db.close();
+  await (await wrapper.db).close();
 }
