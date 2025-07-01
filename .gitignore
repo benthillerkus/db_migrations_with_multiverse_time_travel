@@ -8,3 +8,5 @@ pubspec.lock
 
 coverage.json
 lcov.info
+
+.DS_Store

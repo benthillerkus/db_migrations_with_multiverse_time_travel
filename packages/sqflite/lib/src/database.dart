@@ -4,33 +4,34 @@ import 'package:sqflite_common/sqlite_api.dart';
 import 'package:sqflite_migrations_with_multiverse_time_travel/src/transaction.dart';
 
 /// An [AsyncDatabase] implementation for SQLite.
-class SqfliteDatabase implements AsyncDatabase<String> {
+class SqfliteDatabase implements AsyncDatabase<Database, String> {
   /// Creates a new [SqfliteDatabase] instance.
   const SqfliteDatabase(
-    this._db, {
+    this.db, {
     this.transactor = const TransactionDelegate(),
   });
 
-  final Database _db;
+  @override
+  final Database db;
 
   /// Responsible for handling transactions
   final Transactor transactor;
 
   @override
   @internal
-  Future<void> beginTransaction() => transactor.begin(_db);
+  Future<void> beginTransaction() => transactor.begin(db);
 
   @override
   @internal
-  Future<void> commitTransaction() => transactor.commit(_db);
+  Future<void> commitTransaction() => transactor.commit(db);
 
   @override
   @internal
-  Future<void> rollbackTransaction() => transactor.rollback(_db);
+  Future<void> rollbackTransaction() => transactor.rollback(db);
 
   @override
   Future<void> initializeMigrationsTable() {
-    return _db.execute('''
+    return db.execute('''
 CREATE TABLE IF NOT EXISTS migrations (
   defined_at INTEGER PRIMARY KEY,
   name TEXT,
@@ -43,34 +44,34 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   Future<bool> isMigrationsTableInitialized() {
-    return _db
+    return db
         .rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='migrations' LIMIT 1")
         .then((result) => result.isNotEmpty);
   }
 
   @override
   Future<void> performMigration(String migration) {
-    return _db.execute(migration);
+    return db.execute(migration);
   }
 
   @override
   @internal
-  Future<void> removeMigrations(List<Migration<String>> migrations) {
+  Future<void> removeMigrations(List<Migration<Database, String>> migrations) {
     return Future.wait(migrations.map((migration) {
-      return _db.execute('DELETE FROM migrations WHERE defined_at = ?', [migration.definedAt.millisecondsSinceEpoch]);
+      return db.execute('DELETE FROM migrations WHERE defined_at = ?', [migration.definedAt.millisecondsSinceEpoch]);
     }));
   }
 
   @override
   @internal
-  Stream<Migration<String>> retrieveAllMigrations() async* {
-    final cursor = await _db.rawQueryCursor("SELECT * FROM migrations ORDER BY defined_at ASC", []);
+  Stream<AsyncMigration<Database, String>> retrieveAllMigrations() async* {
+    final cursor = await db.rawQueryCursor("SELECT * FROM migrations ORDER BY defined_at ASC", []);
 
     try {
       while (true) {
         final hasRow = await cursor.moveNext();
         if (!hasRow) break;
-        yield Migration<String>(
+        yield AsyncMigration<Database, String>(
           definedAt: DateTime.fromMillisecondsSinceEpoch(cursor.current['defined_at'] as int, isUtc: true),
           name: cursor.current['name'] as String?,
           description: cursor.current['description'] as String?,
@@ -90,9 +91,9 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   @internal
-  Future<void> storeMigrations(List<Migration<String>> migrations) {
+  Future<void> storeMigrations(covariant List<Migration<Database, String>> migrations) {
     return Future.wait(migrations.map((migration) {
-      return _db.insert('migrations', {
+      return db.insert('migrations', {
         'defined_at': migration.definedAt.millisecondsSinceEpoch,
         'name': migration.name,
         'description': migration.description,
