@@ -4,9 +4,9 @@ import 'migration.dart';
 
 /// {@template dmwmt.database}
 /// A database that can store and apply migrations.
-/// 
+///
 /// Implementations of this class should wrap a database library.
-/// 
+///
 /// [Db] is the type of the wrapped database,
 /// and [Serial] is the type of the migration instructions used by the database.
 /// {@endtemplate}
