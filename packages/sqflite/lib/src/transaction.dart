@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:sqflite_common/sqflite.dart';
 import 'package:sqflite_migrations_with_multiverse_time_travel/sqflite_migrations_with_multiverse_time_travel.dart';
 
 /// A delegate for handling database transactions.
