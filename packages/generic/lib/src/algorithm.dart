@@ -211,7 +211,7 @@ class SyncMigrator<D, T> {
           _db!.beginTransaction();
           _inTransaction = true;
         }
-        lastCommon.render(_db!.db);
+        lastCommon.initialize(_db!.db);
         _db!.performMigration(lastCommon.up);
       }
       _moveNextDefined();
@@ -281,7 +281,7 @@ class SyncMigrator<D, T> {
       }
       final migration = _defined!.current.copyWith(appliedAt: now);
       log.finer('|_ + migration ${migration.humanReadableId}');
-      migration.render(_db!.db);
+      migration.initialize(_db!.db);
       _db!.performMigration(migration.up);
       toApply.add(migration);
       _moveNextDefined();
@@ -438,7 +438,7 @@ class AsyncMigrator<D, T> {
           await _db!.beginTransaction();
           _inTransaction = true;
         }
-        lastCommon.render(_db!.db);
+        lastCommon.initialize(_db!.db);
         await _db!.performMigration(lastCommon.up);
       }
       _moveNextDefined();
@@ -495,7 +495,7 @@ class AsyncMigrator<D, T> {
       }
       final migration = _defined!.current.copyWith(appliedAt: now);
       log.finer('|_ + migration ${migration.humanReadableId}');
-      migration.render(_db!.db);
+      migration.initialize(_db!.db);
       await _db!.performMigration(migration.up);
       toApply.add(migration);
       _moveNextDefined();
