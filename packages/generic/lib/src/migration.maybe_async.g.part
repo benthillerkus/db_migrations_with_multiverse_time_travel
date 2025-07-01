@@ -1,7 +1,8 @@
-import 'package:maybe_async_annotations/maybe_async_annotations.dart';
-import 'package:meta/meta.dart';
 
-part 'migration.g.dart';
+
+// **************************************************************************
+// MaybeAsyncGenerator
+// **************************************************************************
 
 //// {@template dmwmt.migration}
 /// A change to the database that can be applied and rolled back.
@@ -11,9 +12,7 @@ part 'migration.g.dart';
 /// Migrations have to be serialized and deserialized preserving atleast [definedAt] and [down]
 /// to be able to make [SyncMigrator] work.
 /// {endtemplate}
-@maybeAsync
-@immutable
-class Migration<D, S> implements Comparable<Migration<D, S>> {
+GeneratedMigration<D, S> implements Comparable<Migration<D, S>> {
   /// Creates a new migration data class instance.
   ///
   /// Make sure that [definedAt] is unique for each migration and represents the time the code was edited.

@@ -11,7 +11,7 @@ resolution: workspace
 # Add regular dependencies here.
 dependencies:
   maybe_async_annotations: ^1.0.0
-  source_gen: 2.0.0
+  source_gen: 3.0.0-dev
   build_config: ^1.1.2
 
 dev_dependencies:
