@@ -211,7 +211,11 @@ class SyncMigrator<D, T> {
           _db!.beginTransaction();
           _inTransaction = true;
         }
-        lastCommon.buildInstructions(_db!.db);
+        if (!lastCommon.hasInstructions) {
+          log.finest('building instructions for migration ${lastCommon.humanReadableId}');
+          lastCommon.buildInstructions(_db!.db);
+        }
+        log.finer('applying always-apply migration ${lastCommon.humanReadableId}');
         _db!.executeInstructions(lastCommon.up);
       }
       _moveNextDefined();
@@ -279,9 +283,13 @@ class SyncMigrator<D, T> {
         _db!.beginTransaction();
         _inTransaction = true;
       }
-      final migration = _defined!.current.copyWith(appliedAt: now);
-      log.finer('|_ + migration ${migration.humanReadableId}');
-      migration.buildInstructions(_db!.db);
+      var migration = _defined!.current;
+      log.finer('|_ - migration ${migration.humanReadableId}');
+      if (!migration.hasInstructions) {
+        log.finer('    [building instructions]');
+        migration.buildInstructions(_db!.db);
+      }
+      migration = migration.copyWith(appliedAt: now);
       _db!.executeInstructions(migration.up);
       toApply.add(migration);
       _moveNextDefined();
@@ -438,7 +446,11 @@ class AsyncMigrator<D, T> {
           await _db!.beginTransaction();
           _inTransaction = true;
         }
-        lastCommon.buildInstructions(_db!.db);
+        if (!lastCommon.hasInstructions) {
+          log.finest('building instructions for migration ${lastCommon.humanReadableId}');
+          await lastCommon.buildInstructions(_db!.db);
+        }
+        log.finer('applying always-apply migration ${lastCommon.humanReadableId}');
         await _db!.executeInstructions(lastCommon.up);
       }
       _moveNextDefined();
@@ -493,9 +505,13 @@ class AsyncMigrator<D, T> {
         await _db!.beginTransaction();
         _inTransaction = true;
       }
-      final migration = _defined!.current.copyWith(appliedAt: now);
-      log.finer('|_ + migration ${migration.humanReadableId}');
-      migration.buildInstructions(_db!.db);
+      var migration = _defined!.current;
+      log.finer('|_ - migration ${migration.humanReadableId}');
+      if (!migration.hasInstructions) {
+        log.finer('    [building instructions]');
+        await migration.buildInstructions(_db!.db);
+      }
+      migration = migration.copyWith(appliedAt: now);
       await _db!.executeInstructions(migration.up);
       toApply.add(migration);
       _moveNextDefined();

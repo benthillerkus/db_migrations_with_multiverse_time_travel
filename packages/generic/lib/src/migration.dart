@@ -31,7 +31,7 @@ class AlreadyInitializedMigrationError extends StateError {
 ///
 /// Migrations have to be serialized and deserialized preserving atleast [definedAt] and [down]
 /// to be able to make [SyncMigrator] work.
-/// 
+///
 /// [D] is the type of the database that the migration is applied to.
 /// [S] is the type of the migration instructions (for example, a SQL string).
 /// {@endtemplate}
@@ -162,10 +162,6 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
   @mustCallSuper
   FutureOr<void> buildInstructions(D db) {
     if (_hasInstructions) throw AlreadyInitializedMigrationError(this);
-    if (_instructionBuilder == null) {
-      throw StateError(
-          'Migration renderer is not set. Use Migration.deferred constructor to create a deferred migration.');
-    }
   }
 
   /// The migration to apply to the database.
@@ -268,6 +264,7 @@ class SyncMigration<Db, Serial> extends Migration<Db, Serial> {
     Serial? up,
     Serial? down,
   }) {
+    if (!_hasInstructions) throw UninitializedMigrationError(this);
     return SyncMigration<Db, Serial>(
       definedAt: definedAt ?? this.definedAt,
       name: name ?? this.name,
@@ -332,6 +329,7 @@ class AsyncMigration<Db, Serial> extends Migration<Db, Serial> {
     Serial? up,
     Serial? down,
   }) {
+    if (!_hasInstructions) throw UninitializedMigrationError(this);
     return AsyncMigration<Db, Serial>(
       definedAt: definedAt ?? this.definedAt,
       name: name ?? this.name,
