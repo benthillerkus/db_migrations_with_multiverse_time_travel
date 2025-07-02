@@ -1,3 +1,12 @@
+// LLM generated code
+//
+// This is just intended to "harden" the test suite
+// and entrench current behavior.
+//
+// Since there is no intention behind these
+// they can just be removed and regenerated
+// if they conflict with future changes.
+
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_migrations_with_multiverse_time_travel/sqflite_migrations_with_multiverse_time_travel.dart';
 import 'package:test/test.dart';
@@ -43,7 +52,7 @@ void main() {
           up: 'CREATE TABLE tbl (a TEXT)',
           down: 'DROP TABLE tbl',
         );
-        await wrapper.storeMigrations([migration].cast());
+        await wrapper.storeMigrations([migration]);
 
         final db = await wrapper.db;
         final result = await db.query('migrations');
