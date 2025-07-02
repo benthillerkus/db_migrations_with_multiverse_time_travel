@@ -11,7 +11,7 @@ void main() {
   });
 
   group("Sync", () {
-    final migrator = SyncMigrator<Null, Symbol>();
+    final migrator = SyncMigrator<dynamic, Symbol>();
     final eq = IterableEquality<Mig>();
 
     test("Empty", () {
@@ -61,7 +61,7 @@ void main() {
         Mig(definedAt: DateTime.utc(2025, 3, 8), up: #up, down: #down),
       ]);
 
-      SyncMigrator<Null, Symbol>().call(db: db, defined: <Mig>[].iterator);
+      SyncMigrator<dynamic, Symbol>().call(db: db, defined: <Mig>[].iterator);
 
       expect(db.applied, isEmpty);
     });
@@ -78,14 +78,14 @@ void main() {
         Mig(definedAt: DateTime.utc(2025, 3, 8), up: #up, down: #down),
       ]);
 
-      SyncMigrator<Null, Symbol>().call(db: db, defined: defined.iterator);
+      SyncMigrator<dynamic, Symbol>().call(db: db, defined: defined.iterator);
 
       expect(eq.equals(db.applied, defined), isTrue);
     });
   });
 
   group("Async", () {
-    final migrator = AsyncMigrator<Null, Symbol>();
+    final migrator = AsyncMigrator<dynamic, Symbol>();
     final eq = IterableEquality<AMig>();
 
     test("Empty", () async {
@@ -135,7 +135,7 @@ void main() {
         AMig(definedAt: DateTime.utc(2025, 3, 8), up: #up, down: #down),
       ]);
 
-      await AsyncMigrator<Null, Symbol>().call(db: db, defined: <AMig>[].iterator);
+      await AsyncMigrator<dynamic, Symbol>().call(db: db, defined: <AMig>[].iterator);
 
       expect(db.applied, isEmpty);
     });
@@ -152,7 +152,7 @@ void main() {
         AMig(definedAt: DateTime.utc(2025, 3, 8), up: #up, down: #down),
       ]);
 
-      await AsyncMigrator<Null, Symbol>().call(db: db, defined: defined.iterator);
+      await AsyncMigrator<dynamic, Symbol>().call(db: db, defined: defined.iterator);
 
       expect(eq.equals(db.applied, defined), isTrue);
     });

@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:logging/logging.dart';
 
-typedef Mig = SyncMigration<Null, Symbol>;
-typedef AMig = AsyncMigration<Null, Symbol>;
+typedef Mig = SyncMigration<dynamic, Symbol>;
+typedef AMig = AsyncMigration<dynamic, Symbol>;
 
-class SyncMockDatabase implements SyncDatabase<Null, Symbol> {
-  SyncMockDatabase([List<Mig>? applied])
+class SyncMockDatabase implements SyncDatabase<dynamic, Symbol> {
+  SyncMockDatabase([List<Mig>? applied, this.db])
       : applied = applied ?? List.empty(growable: true),
         appliedForRollback = List.empty(growable: true),
         performedMigrations = List.empty(growable: true),
@@ -15,7 +15,7 @@ class SyncMockDatabase implements SyncDatabase<Null, Symbol> {
         log = Logger('db.mock');
 
   @override
-  final Null db = null;
+  final dynamic db;
 
   final List<Mig> applied;
   final List<Mig> appliedForRollback;
@@ -76,7 +76,7 @@ class SyncMockDatabase implements SyncDatabase<Null, Symbol> {
   }
 }
 
-class AsyncMockDatabase implements AsyncDatabase<Null, Symbol> {
+class AsyncMockDatabase implements AsyncDatabase<dynamic, Symbol> {
   AsyncMockDatabase([List<AMig>? applied])
       : applied = applied ?? List.empty(growable: true),
         appliedForRollback = List.empty(growable: true),
@@ -85,7 +85,7 @@ class AsyncMockDatabase implements AsyncDatabase<Null, Symbol> {
         log = Logger('db.mock');
 
   @override
-  final Null db = null;
+  final dynamic db = null;
 
   final List<AMig> applied;
   final List<AMig> appliedForRollback;

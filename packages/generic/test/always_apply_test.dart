@@ -10,7 +10,7 @@ void main() {
   });
 
   group("Sync", () {
-    final migrator = SyncMigrator<void, Symbol>();
+    final migrator = SyncMigrator<dynamic, Symbol>();
 
     test("Some always apply", () {
       final defined = [
@@ -27,7 +27,7 @@ void main() {
   });
 
   group("Async", () {
-    final migrator = AsyncMigrator<Null, Symbol>();
+    final migrator = AsyncMigrator<dynamic, Symbol>();
 
     test("Some always apply", () async {
       final defined = [

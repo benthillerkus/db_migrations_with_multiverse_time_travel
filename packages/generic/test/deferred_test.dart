@@ -1,7 +1,10 @@
+import 'dart:math';
+
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:test/test.dart';
 
 import 'logging.dart';
+import 'mock_database.dart';
 
 void main() {
   setUpAll(() {
@@ -59,5 +62,48 @@ void main() {
     );
 
     expect(() => mig.copyWith(appliedAt: DateTime.utc(2070)), throwsA(isA<UninitializedMigrationError>()));
+  });
+
+  group("Sync", () {
+    test("Deferred migrations are being initialized during migration", () {
+      final migrations = <SyncMigration<Map<Symbol, dynamic>, Symbol>>[
+        SyncMigration.deferred(
+          definedAt: DateTime.utc(2025, 3, 6),
+          builder: (db) {
+            expect(db, isEmpty);
+            db[#first] = true;
+            return (up: #oneUp, down: #oneDown);
+          },
+        ),
+        SyncMigration.deferred(
+          definedAt: DateTime.utc(2025, 4),
+          alwaysApply: true,
+          builder: (db) {
+            expect(db, contains(#first));
+            if (db.containsKey(#second)) {
+              db[#second] += 1;
+            } else {
+              db[#second] = 1;
+            }
+            return (up: #fourUp, down: #fourDown);
+          },
+        ),
+        SyncMigration(definedAt: DateTime.utc(2026), alwaysApply: true, up: #twoUp, down: #twoDown),
+        SyncMigration(definedAt: DateTime.utc(2036), up: #threeUp, down: #threeDown),
+      ];
+
+      final migrator = SyncMigrator<dynamic, Symbol>();
+      final db = SyncMockDatabase([], <Symbol, dynamic>{});
+
+      migrator.call(db: db, defined: migrations.iterator);
+
+      expect(db.db, allOf(containsPair(#first, true), containsPair(#second, 1)));
+
+      final db2 = SyncMockDatabase([], db.db);
+      migrator.call(db: db2, defined: migrations.iterator);
+
+      expect(db2.db, allOf(containsPair(#first, true), containsPair(#second, 1)),
+          reason: "Deferred migrations should not be re-initialized if they have already been run.");
+    });
   });
 }
