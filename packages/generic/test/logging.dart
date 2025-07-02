@@ -3,8 +3,11 @@ import 'dart:developer' as developer;
 import 'package:ansicolor/ansicolor.dart';
 import 'package:logging/logging.dart';
 
+late Logger log;
+
 void setUpLogging() {
   Logger.root.level = Level.ALL;
+  log = Logger('test');
   final pen = AnsiPen();
   Logger.root.onRecord.listen((record) {
     switch (record.level) {
