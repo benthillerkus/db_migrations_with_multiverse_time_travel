@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:test/test.dart';
