@@ -44,7 +44,7 @@ late final db;
 void main() {
   sqlite3.open("database.db");
 
-  Sqlite3Database(db).migrate([
+  Sqlite3Database(() => db).migrate([
     Migration(
       name: "add users table",
       definedAt: DateTime.utc(2026, 4, 12, 11, 4),

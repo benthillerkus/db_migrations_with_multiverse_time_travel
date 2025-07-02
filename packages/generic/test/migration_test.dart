@@ -1,14 +1,14 @@
-import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
 import 'package:test/test.dart';
 
 import 'logging.dart';
+import 'mock_database.dart';
 
 void main() {
   setUpAll(() {
     setUpLogging();
   });
 
-  final migration = Migration<void>(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null);
+  final migration = Mig(definedAt: DateTime.utc(2025, 3, 6), up: #up, down: #down);
 
   test('UTC', () {
     final a = DateTime(2025, 3, 6);
@@ -19,7 +19,7 @@ void main() {
   });
 
   test('Throw if not UTC', () {
-    expect(() => Migration<void>(definedAt: DateTime(2025, 3, 6), up: null, down: null), throwsA(isA<ArgumentError>()));
+    expect(() => Mig(definedAt: DateTime(2025, 3, 6), up: #up, down: #down), throwsA(isA<ArgumentError>()));
   });
 
   test('DateTime is being preserved', () {
@@ -27,36 +27,44 @@ void main() {
   });
 
   test('Dataclass-ish equality', () {
-    final migration2 = Migration<void>(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null);
-    final migration3 = Migration<void>(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null);
+    final migration2 = Mig(definedAt: DateTime.utc(2025, 3, 6), up: #up, down: #down);
+    final migration3 = Mig(definedAt: DateTime.utc(2025, 3, 7), up: #up, down: #down);
 
     expect(migration, migration2);
     expect(migration, isNot(migration3));
   });
 
   test('Equality is defined by definedAt', () {
-    final migration = Migration<int>(definedAt: DateTime.utc(2025, 3, 6), up: 0, down: 0);
-    final migration2 = Migration<int>(definedAt: DateTime.utc(2025, 3, 6), up: 1, down: 1);
-    final migration3 = Migration<int>(definedAt: DateTime.utc(2025, 3, 7), up: 0, down: 0);
+    final migration = Mig(definedAt: DateTime.utc(2025, 3, 6), up: #o, down: #o);
+    final migration2 = Mig(definedAt: DateTime.utc(2025, 3, 6), up: #i, down: #i);
+    final migration3 = Mig(definedAt: DateTime.utc(2025, 3, 7), up: #o, down: #o);
 
     expect(migration, migration2);
     expect(migration, isNot(migration3));
   });
 
   test('Hashcode is correctly implemented', () {
-    final migration = Migration<void>(definedAt: DateTime.utc(1970, 0, 1), up: null, down: null);
+    final migration = Mig(definedAt: DateTime.utc(1970, 0, 1), up: #up, down: #down);
 
     expect({migration}, contains(migration));
   });
 
   test('Order is defined by definedAt', () {
-    final migration1 = Migration<void>(definedAt: DateTime.utc(2025, 3, 6), up: null, down: null);
-    final migration2 = Migration<void>(definedAt: DateTime.utc(2025, 3, 7), up: null, down: null);
-    final migration3 = Migration<void>(definedAt: DateTime.utc(2025, 3, 8), up: null, down: null);
+    final migration1 = Mig(definedAt: DateTime.utc(2025, 3, 6), up: #up, down: #down);
+    final migration2 = Mig(definedAt: DateTime.utc(2025, 3, 7), up: #up, down: #down);
+    final migration3 = Mig(definedAt: DateTime.utc(2025, 3, 8), up: #up, down: #down);
 
     expect(migration1 < migration2, isTrue);
     expect(migration2 > migration1, isTrue);
     expect(migration1 >= migration1, isTrue);
     expect(migration3 <= migration3, isTrue);
+  });
+
+  test('Copy with', () {
+    final migration2 = migration.copyWith(up: #newUp, down: #newDown);
+
+    expect(migration2.definedAt, migration.definedAt);
+    expect(migration2.up, #newUp);
+    expect(migration2.down, #newDown);
   });
 }

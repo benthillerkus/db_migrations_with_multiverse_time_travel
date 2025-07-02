@@ -49,7 +49,7 @@ void main() {
 
     log.info("In development the app is now started and the migrations are applied");
     {
-      Sqlite3Database(db).migrate(migrationsMain);
+      Sqlite3Database((_) => db).migrate(migrationsMain);
 
       expect(
         db.select("select * from sqlite_master where type='table' and name='users' limit 1"),
@@ -67,7 +67,7 @@ void main() {
 
       expect(users, ['Alice', 'Bob', 'Steward', 'Mallory']);
 
-      expect(Sqlite3Database(db).retrieveAllMigrations().toList(), migrationsMain);
+      expect(Sqlite3Database((_) => db).retrieveAllMigrations().toList(), migrationsMain);
     }
 
     log.info("On a branch we now add posts as a feature");
@@ -92,7 +92,7 @@ void main() {
       ),
     ];
     {
-      Sqlite3Database(db).migrate(migrationsBranchPosts);
+      Sqlite3Database((_) => db).migrate(migrationsBranchPosts);
 
       expect(
         db.select("select * from sqlite_master where type='table' and name='posts' limit 1"),
@@ -102,7 +102,7 @@ void main() {
 
       db.execute("insert into posts (user_id, content) values (1, 'Hello, World!'), (2, 'Hi!');");
 
-      expect(Sqlite3Database(db).retrieveAllMigrations().toList(), migrationsBranchPosts);
+      expect(Sqlite3Database((_) => db).retrieveAllMigrations().toList(), migrationsBranchPosts);
     }
 
     log.info("On a different branch we want to rename users.identifier to users.id");
@@ -116,7 +116,7 @@ void main() {
       ),
     ];
     {
-      Sqlite3Database(db).migrate(migrationsBranchRenameIdentifier);
+      Sqlite3Database((_) => db).migrate(migrationsBranchRenameIdentifier);
 
       expect(
         db.select("select * from sqlite_master where type='table' and name='users' limit 1"),
@@ -131,7 +131,7 @@ void main() {
       expect(db.select("select id from users"), isNotEmpty);
 
       expect(
-        Sqlite3Database(db).retrieveAllMigrations().toList(),
+        Sqlite3Database((_) => db).retrieveAllMigrations().toList(),
         migrationsBranchRenameIdentifier,
       );
     }
@@ -148,7 +148,7 @@ void main() {
         ),
       ];
 
-      Sqlite3Database(db).migrate(migrationsBranchLikes);
+      Sqlite3Database((_) => db).migrate(migrationsBranchLikes);
 
       log.info("The app is now running on the likes branch");
       db.execute("insert into posts (user_id, content) values (1, 'Hello, World!'), (2, 'Hi!');");
@@ -165,7 +165,7 @@ void main() {
         ['Hi!', 0],
       ]);
 
-      expect(Sqlite3Database(db).retrieveAllMigrations().toList(), migrationsBranchLikes);
+      expect(Sqlite3Database((_) => db).retrieveAllMigrations().toList(), migrationsBranchLikes);
     }
 
     log.info("Now the rename branch has been merged into main");
@@ -174,7 +174,7 @@ void main() {
 
     log.info("We check out main");
     {
-      Sqlite3Database(db).migrate(migrationsMain);
+      Sqlite3Database((_) => db).migrate(migrationsMain);
 
       expect(
         db.select("select * from sqlite_master where type='table' and name='users' limit 1"),
@@ -188,7 +188,7 @@ void main() {
 
       expect(db.select("select id from users"), isNotEmpty);
 
-      expect(Sqlite3Database(db).retrieveAllMigrations().toList(), migrationsMain);
+      expect(Sqlite3Database((_) => db).retrieveAllMigrations().toList(), migrationsMain);
     }
 
     log.info("Now we have to update our posts branch to include the changes from the main branch");
@@ -210,7 +210,7 @@ void main() {
 
     log.info("And we open the app on the posts branch");
     {
-      Sqlite3Database(db).migrate(migrationsBranchPostsUpdated);
+      Sqlite3Database((_) => db).migrate(migrationsBranchPostsUpdated);
 
       expect(
         db.select("select * from sqlite_master where type='table' and name='posts' limit 1"),
@@ -220,7 +220,7 @@ void main() {
 
       db.execute("insert into posts (user_id, content) values (1, 'Hello, World!'), (2, 'Hi!');");
 
-      expect(Sqlite3Database(db).retrieveAllMigrations().toList(), migrationsBranchPostsUpdated);
+      expect(Sqlite3Database((_) => db).retrieveAllMigrations().toList(), migrationsBranchPostsUpdated);
     }
 
     log.info("Now we merge the posts branch into main");
@@ -228,7 +228,7 @@ void main() {
     migrationsMain.addAll(migrationsBranchPostsUpdated);
     log.info("We check out main");
     {
-      Sqlite3Database(db).migrate(migrationsMain);
+      Sqlite3Database((_) => db).migrate(migrationsMain);
 
       expect(
         db.select("select * from sqlite_master where type='table' and name='users' limit 1"),
@@ -246,7 +246,7 @@ void main() {
         reason: "because we added sample data on the posts 'branch', before we merged on main",
       );
 
-      expect(Sqlite3Database(db).retrieveAllMigrations().toList(), migrationsMain);
+      expect(Sqlite3Database((_) => db).retrieveAllMigrations().toList(), migrationsMain);
     }
 
     log.info("Now we merge main into the likes branch, to prepare it for merging into main");
@@ -258,7 +258,7 @@ void main() {
     {
       log.info("would end up throwing an error");
       expect(
-        () => Sqlite3Database(db).migrate([
+        () => Sqlite3Database((_) => db).migrate([
           ...migrationsMain,
           Migration(
             name: "add likes column to posts",
@@ -297,7 +297,7 @@ void main() {
       ].sorted((a, b) => a.compareTo(b));
       expect(sorted.first < sorted.last, isTrue);
       expect(
-        () => Sqlite3Database(db).migrate(sorted),
+        () => Sqlite3Database((_) => db).migrate(sorted),
         throwsA(
           isA<SqliteException>().having((e) => e.message, "message", contains("no such table")),
         ),
@@ -316,13 +316,13 @@ void main() {
         ),
       ];
 
-      Sqlite3Database(db).migrate(migrationsBranchLikesUpdated);
+      Sqlite3Database((_) => db).migrate(migrationsBranchLikesUpdated);
 
       expect(
         db.select("select name from pragma_table_info('posts')").map((row) => row.values.first),
         ["id", "user_id", "content", "created_at", "likes"],
       );
-      expect(Sqlite3Database(db).retrieveAllMigrations().toList(), migrationsBranchLikesUpdated);
+      expect(Sqlite3Database((_) => db).retrieveAllMigrations().toList(), migrationsBranchLikesUpdated);
     }
   });
 }

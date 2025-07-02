@@ -1,16 +1,50 @@
 import 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart';
+import 'package:meta/meta.dart';
 import 'package:sqlite3/common.dart';
 
-/// A [SyncDatabase] implementation for SQLite3.
-class Sqlite3Database implements SyncDatabase<String> {
-  /// Creates a new [Sqlite3Database] instance.
-  const Sqlite3Database(this._db);
+import 'transaction.dart';
 
-  final CommonDatabase _db;
+/// A [SyncDatabase] implementation for SQLite3.
+class Sqlite3Database implements SyncDatabase<CommonDatabase, String> {
+  /// Creates a new [Sqlite3Database] instance.
+  ///
+  /// The [connect] function is used to establish a connection to the SQLite3 database,
+  /// see [Sqlite3Database.reconnect].
+  Sqlite3Database(
+    CommonDatabase Function(CommonDatabase? oldConnection) connect, {
+    this.transactor = const TransactionDelegate(),
+  }) : _connect = connect;
+
+  CommonDatabase? _db;
+
+  @override
+  CommonDatabase get db => _db ??= _connect(null);
+
+  /// {@macro time_travel.sqlite3.reconnect}
+  ///
+  /// [oldConnection] is `null` when `connect` is called for the first time,
+  /// and the previous result of [connect] on subsequent calls.
+  final CommonDatabase Function(CommonDatabase? oldConnection) _connect;
+
+  /// {@template time_travel.sqlite3.reconnect}
+  /// Establishes a connection to the database.
+  ///
+  /// This can be called multiple times, for example,
+  /// when [BackUpTransactionDelegate] is used,
+  /// which can close the database connection.
+  ///
+  /// If you don't want to reconnect to the database,
+  /// you can just pass an existing connection.
+  /// {@endtemplate}
+  @internal
+  void reconnect() => _db = _connect(_db);
+
+  /// Responsible for handling transactions
+  final Transactor transactor;
 
   @override
   void initializeMigrationsTable() {
-    _db.execute('''
+    db.execute('''
 CREATE TABLE IF NOT EXISTS migrations (
   defined_at INTEGER PRIMARY KEY,
   name TEXT,
@@ -23,21 +57,22 @@ CREATE TABLE IF NOT EXISTS migrations (
 
   @override
   bool isMigrationsTableInitialized() {
-    final result = _db.select(
+    final result = db.select(
       '''SELECT name FROM sqlite_master WHERE type='table' AND name='migrations' LIMIT 1''',
     );
     return result.isNotEmpty;
   }
 
   @override
-  Iterator<Migration<String>> retrieveAllMigrations() {
-    return _db
+  @internal
+  Iterator<SyncMigration<CommonDatabase, String>> retrieveAllMigrations() {
+    return db
         .select('''SELECT * FROM migrations ORDER BY defined_at ASC''')
         .rows
         .map((row) {
           final [definedAt, name, description, appliedAt, up, down] = row;
 
-          return Migration<String>(
+          return SyncMigration<CommonDatabase, String>(
             definedAt: DateTime.fromMillisecondsSinceEpoch(definedAt as int, isUtc: true),
             name: name as String?,
             description: description as String?,
@@ -50,11 +85,12 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
-  void storeMigrations(List<Migration<String>> migrations) {
-    final withAppliedAt = _db.prepare(
+  @internal
+  void storeMigrations(List<SyncMigration<CommonDatabase, String>> migrations) {
+    final withAppliedAt = db.prepare(
       "INSERT INTO migrations (defined_at, name, description, applied_at, up, down) VALUES (?, ?, ?, ?, ?, ?)",
     );
-    final withoutAppliedAt = _db.prepare(
+    final withoutAppliedAt = db.prepare(
       "INSERT INTO migrations (defined_at, name, description, up, down) VALUES (?, ?, ?, ?, ?)",
     );
 
@@ -84,8 +120,9 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
-  void removeMigrations(List<Migration<String>> migrations) {
-    final stmt = _db.prepare('''DELETE FROM migrations WHERE defined_at = ?''');
+  @internal
+  void removeMigrations(List<SyncMigration<CommonDatabase, String>> migrations) {
+    final stmt = db.prepare('''DELETE FROM migrations WHERE defined_at = ?''');
 
     for (final migration in migrations) {
       stmt.execute([migration.definedAt.millisecondsSinceEpoch]);
@@ -95,22 +132,19 @@ CREATE TABLE IF NOT EXISTS migrations (
   }
 
   @override
-  void performMigration(String migration) {
-    _db.execute(migration);
+  void executeInstructions(String sql) {
+    db.execute(sql);
   }
 
   @override
-  void beginTransaction() {
-    _db.execute('BEGIN TRANSACTION');
-  }
+  @internal
+  void beginTransaction() => transactor.begin(this);
 
   @override
-  void commitTransaction() {
-    _db.execute('COMMIT TRANSACTION');
-  }
+  @internal
+  void commitTransaction() => transactor.commit(this);
 
   @override
-  void rollbackTransaction() {
-    _db.execute('ROLLBACK TRANSACTION');
-  }
+  @internal
+  void rollbackTransaction() => transactor.rollback(this);
 }

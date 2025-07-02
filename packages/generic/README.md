@@ -44,7 +44,7 @@ late final db;
 void main() {
   sqlite3.open("database.db");
 
-  Sqlite3Database(db).migrate([
+  Sqlite3Database((_) => db).migrate([
     Migration(
       name: "add users table",
       definedAt: DateTime.utc(2026, 4, 12, 11, 4),
@@ -133,7 +133,7 @@ drop table users;
   ),
 ];
 
-Sqlite3Database(db).migrate(migrations);
+Sqlite3Database((_) => db).migrate(migrations);
 ```
 
 Adapters export everything you need, so you can just run `pub add sqlite3_migrations_with_multiverse_time_travel` and you're good to go.
