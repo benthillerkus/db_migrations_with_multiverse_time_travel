@@ -157,4 +157,48 @@ void main() {
       expect(eq.equals(db.applied, defined), isTrue);
     });
   });
+
+  group('SyncMigrateExt', () {
+    test('migrate applies migrations in order', () {
+      final defined = [
+        Mig(definedAt: DateTime.utc(2025, 3, 6), up: #up, down: #down),
+        Mig(definedAt: DateTime.utc(2025, 3, 7), up: #up, down: #down),
+      ];
+      final db = SyncMockDatabase();
+
+      db.migrate(defined);
+
+      expect(db.applied, defined);
+    });
+
+    test('migrate with empty list does nothing', () {
+      final db = SyncMockDatabase();
+
+      db.migrate([]);
+
+      expect(db.applied, isEmpty);
+    });
+  });
+
+  group('AsyncMigrateExt', () {
+    test('migrate applies migrations in order', () async {
+      final defined = [
+        AMig(definedAt: DateTime.utc(2025, 3, 6), up: #up, down: #down),
+        AMig(definedAt: DateTime.utc(2025, 3, 7), up: #up, down: #down),
+      ];
+      final db = AsyncMockDatabase();
+
+      await db.migrate(defined);
+
+      expect(db.applied, defined);
+    });
+
+    test('migrate with empty list does nothing', () async {
+      final db = AsyncMockDatabase();
+
+      await db.migrate([]);
+
+      expect(db.applied, isEmpty);
+    });
+  });
 }
