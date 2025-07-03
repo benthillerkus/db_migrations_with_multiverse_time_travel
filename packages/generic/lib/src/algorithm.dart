@@ -157,9 +157,15 @@ class SyncMigrator<D, T> {
       if (_inTransaction) {
         _db!.commitTransaction();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      log.severe(
+        'migration failed, ${_inTransaction ? 'rolling back...' : 'cannot roll back, because not in transaction'}',
+        e,
+        stackTrace,
+      );
       if (_inTransaction) {
         _db!.rollbackTransaction();
+        log.info('...rolled back transaction');
       }
       rethrow;
     }

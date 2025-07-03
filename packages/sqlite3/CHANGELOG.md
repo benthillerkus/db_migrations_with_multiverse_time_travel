@@ -1,3 +1,7 @@
+## 2.1.0
+
+- BREAKING: Fixes a design issue with BackupTransactor that would cause rollback to not work if an unclean shutdown occurs during a transaction.
+
 ## 2.0.0
 
 - Bumps `db_migrations_with_multiverse_time_travel` dependency to 2.0.0.

@@ -20,6 +20,11 @@ class Sqlite3Database implements SyncDatabase<CommonDatabase, String> {
   @override
   CommonDatabase get db => _db ??= _connect(null);
 
+  @internal
+  set db(CommonDatabase value) {
+    _db = value;
+  }
+
   /// {@macro time_travel.sqlite3.reconnect}
   ///
   /// [oldConnection] is `null` when `connect` is called for the first time,
