@@ -172,7 +172,7 @@ DELETE FROM notes WHERE note = 'orphan note' AND user_id = 999;
 '''),
           Migration(
               name: 'Enforce foreign keys',
-              alwaysApply: true,
+              ephemeral: true,
               definedAt: DateTime.utc(2025, 6, 23, 12, 3),
               up: '''
 PRAGMA foreign_keys = ON;

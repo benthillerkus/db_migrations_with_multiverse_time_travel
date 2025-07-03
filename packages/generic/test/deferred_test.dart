@@ -67,7 +67,7 @@ void main() {
       log.info("Setting up stuff");
       makeSecondMigration() => SyncMigration<Map<Symbol, dynamic>, Symbol>.deferred(
             definedAt: DateTime.utc(2025, 4),
-            alwaysApply: true,
+            ephemeral: true,
             builder: (db) {
               expect(db, contains(#first));
               if (db.containsKey(#second)) {
@@ -92,7 +92,7 @@ void main() {
           },
         ),
         makeSecondMigration(),
-        SyncMigration(definedAt: DateTime.utc(2026), alwaysApply: true, up: #twoUp, down: #twoDown),
+        SyncMigration(definedAt: DateTime.utc(2026), ephemeral: true, up: #twoUp, down: #twoDown),
         SyncMigration(definedAt: DateTime.utc(2036), up: #threeUp, down: #threeDown),
       ];
 

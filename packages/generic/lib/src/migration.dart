@@ -48,7 +48,7 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
     this.name,
     this.description,
     this.appliedAt,
-    this.alwaysApply = false,
+    this.ephemeral = false,
     required S up,
     required S down,
   })  : // Ensures that the DateTime is in UTC and also truncates the microseconds,
@@ -91,7 +91,7 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
     this.name,
     this.description,
     this.appliedAt,
-    this.alwaysApply = false,
+    this.ephemeral = false,
     required FutureOr<({S up, S down})> Function(D db) builder,
   })  : // Ensures that the DateTime is in UTC and also truncates the microseconds,
         // so that it's not a problem if microsecond precision is not supported by the database.
@@ -130,12 +130,14 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
   /// on insertion to represent the time the migration was applied.
   final DateTime? appliedAt;
 
-  /// Whether this migration should always be applied, even if it was already applied before.
+  /// Whether this migration is only valid for the current session.
   ///
   /// This might be useful for enabling per session PRAGMAs like `PRAGMA foreign_keys = ON;`
   /// in SQLite that need to be applied every time the database is opened,
   /// but also may be incompatible with some states of the database during the migration.
-  final bool alwaysApply;
+  /// 
+  /// Applying an ephemeral migration does not require a transaction.
+  final bool ephemeral;
 
   bool _hasInstructions;
 
@@ -180,7 +182,7 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
 
   @override
   String toString() {
-    return 'Migration{definedAt: $definedAt, name: $name, description: $description, alwaysApply: $alwaysApply, appliedAt: $appliedAt, up: $up, down: $down}';
+    return 'Migration{definedAt: $definedAt, name: $name, description: $description, ephemeral: $ephemeral, appliedAt: $appliedAt, up: $up, down: $down}';
   }
 
   /// A human-readable identifier for the migration. Used for debugging and logging.
@@ -192,7 +194,7 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
     String? name,
     String? description,
     DateTime? appliedAt,
-    bool? alwaysApply,
+    bool? ephemeral,
     S? up,
     S? down,
   });
@@ -239,7 +241,7 @@ class SyncMigration<Db, Serial> extends Migration<Db, Serial> {
     super.name,
     super.description,
     super.appliedAt,
-    super.alwaysApply,
+    super.ephemeral,
     required super.up,
     required super.down,
   });
@@ -250,7 +252,7 @@ class SyncMigration<Db, Serial> extends Migration<Db, Serial> {
     super.name,
     super.description,
     super.appliedAt,
-    super.alwaysApply,
+    super.ephemeral,
     required ({Serial up, Serial down}) Function(Db db) builder,
   }) : super.deferred(builder: builder);
 
@@ -260,7 +262,7 @@ class SyncMigration<Db, Serial> extends Migration<Db, Serial> {
     String? name,
     String? description,
     DateTime? appliedAt,
-    bool? alwaysApply,
+    bool? ephemeral,
     Serial? up,
     Serial? down,
   }) {
@@ -270,7 +272,7 @@ class SyncMigration<Db, Serial> extends Migration<Db, Serial> {
       name: name ?? this.name,
       description: description ?? this.description,
       appliedAt: appliedAt ?? this.appliedAt,
-      alwaysApply: alwaysApply ?? this.alwaysApply,
+      ephemeral: ephemeral ?? this.ephemeral,
       up: up ?? this.up,
       down: down ?? this.down,
     );
@@ -294,7 +296,7 @@ class AsyncMigration<Db, Serial> extends Migration<Db, Serial> {
     super.name,
     super.description,
     super.appliedAt,
-    super.alwaysApply,
+    super.ephemeral,
     required super.up,
     required super.down,
   });
@@ -305,7 +307,7 @@ class AsyncMigration<Db, Serial> extends Migration<Db, Serial> {
     super.name,
     super.description,
     super.appliedAt,
-    super.alwaysApply,
+    super.ephemeral,
     required super.builder,
   }) : super.deferred();
 
@@ -325,7 +327,7 @@ class AsyncMigration<Db, Serial> extends Migration<Db, Serial> {
     String? name,
     String? description,
     DateTime? appliedAt,
-    bool? alwaysApply,
+    bool? ephemeral,
     Serial? up,
     Serial? down,
   }) {
@@ -335,7 +337,7 @@ class AsyncMigration<Db, Serial> extends Migration<Db, Serial> {
       name: name ?? this.name,
       description: description ?? this.description,
       appliedAt: appliedAt ?? this.appliedAt,
-      alwaysApply: alwaysApply ?? this.alwaysApply,
+      ephemeral: ephemeral ?? this.ephemeral,
       up: up ?? this.up,
       down: down ?? this.down,
     );

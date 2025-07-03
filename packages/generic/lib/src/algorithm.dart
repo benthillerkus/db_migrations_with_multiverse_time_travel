@@ -203,7 +203,7 @@ class SyncMigrator<D, T> {
   ///
   /// The last common migration is the last (going forwards in time) migration that is both defined and applied.
   ///
-  /// Any common migration that has [Migration.alwaysApply] set to `true` will be applied to the database.
+  /// Any common migration that has [Migration.ephemeral] set to `true` will be applied to the database.
   /// {@endtemplate}
   @visibleForTesting
   Migration<D, T>? findLastCommonMigration() {
@@ -211,17 +211,12 @@ class SyncMigrator<D, T> {
     Migration<D, T>? lastCommon;
     while (_hasDefined && _hasApplied && _defined!.current == _applied!.current) {
       lastCommon = _defined!.current;
-      if (lastCommon.alwaysApply) {
-        if (!_inTransaction) {
-          log.finer('beginning transaction...');
-          _db!.beginTransaction();
-          _inTransaction = true;
-        }
+      if (lastCommon.ephemeral) {
         if (!lastCommon.hasInstructions) {
           log.finest('building instructions for migration ${lastCommon.humanReadableId}');
           lastCommon.buildInstructions(_db!.db);
         }
-        log.finer('applying always-apply migration ${lastCommon.humanReadableId}');
+        log.finer('applying ephemeral migration ${lastCommon.humanReadableId}');
         _db!.executeInstructions(lastCommon.up);
       }
       _moveNextDefined();
@@ -446,17 +441,12 @@ class AsyncMigrator<D, T> {
     AsyncMigration<D, T>? lastCommon;
     while (_hasDefined && _hasApplied && _defined!.current == _applied!.current) {
       lastCommon = _defined!.current;
-      if (lastCommon.alwaysApply) {
-        if (!_inTransaction) {
-          log.finer('beginning transaction...');
-          await _db!.beginTransaction();
-          _inTransaction = true;
-        }
+      if (lastCommon.ephemeral) {
         if (!lastCommon.hasInstructions) {
           log.finest('building instructions for migration ${lastCommon.humanReadableId}');
           await lastCommon.buildInstructions(await _db!.db);
         }
-        log.finer('applying always-apply migration ${lastCommon.humanReadableId}');
+        log.finer('applying ephemeral migration ${lastCommon.humanReadableId}');
         await _db!.executeInstructions(lastCommon.up);
       }
       _moveNextDefined();

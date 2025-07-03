@@ -99,7 +99,7 @@ void main() {
         name: 'Test Migration',
         description: 'A test migration',
         appliedAt: DateTime.utc(2025, 3, 6, 12, 0),
-        alwaysApply: true,
+        ephemeral: true,
       );
 
       final str = migration.toString();
@@ -125,30 +125,30 @@ void main() {
   });
 
   group('Always apply advanced scenarios', () {
-    test('multiple alwaysApply migrations in sequence', () {
+    test('multiple ephemeral migrations in sequence', () {
       final migrator = SyncMigrator<dynamic, Symbol>();
       final defined = [
-        Mig(definedAt: DateTime.utc(2025, 3, 6), up: #pragma1, down: #rollback1, alwaysApply: true),
-        Mig(definedAt: DateTime.utc(2025, 3, 7), up: #pragma2, down: #rollback2, alwaysApply: true),
-        Mig(definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, alwaysApply: false),
-        Mig(definedAt: DateTime.utc(2025, 3, 9), up: #pragma4, down: #rollback4, alwaysApply: true),
+        Mig(definedAt: DateTime.utc(2025, 3, 6), up: #pragma1, down: #rollback1, ephemeral: true),
+        Mig(definedAt: DateTime.utc(2025, 3, 7), up: #pragma2, down: #rollback2, ephemeral: true),
+        Mig(definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, ephemeral: false),
+        Mig(definedAt: DateTime.utc(2025, 3, 9), up: #pragma4, down: #rollback4, ephemeral: true),
       ];
       final db = SyncMockDatabase(defined.take(3).toList()); // Only first 3 applied
 
       migrator.call(db: db, defined: defined.iterator);
 
-      // Should apply all alwaysApply migrations and the new one
+      // Should apply all ephemeral migrations and the new one
       expect(db.performedMigrations, containsAllInOrder([#pragma1, #pragma2, #pragma4]));
       expect(db.applied.length, 4);
     });
 
-    test('alwaysApply deferred migration', () {
+    test('ephemeral deferred migration', () {
       final migrator = SyncMigrator<dynamic, Symbol>();
       final defined = [
         SyncMigration<dynamic, Symbol>.deferred(
           definedAt: DateTime.utc(2025, 3, 6),
           builder: (_) => (up: #deferred_up, down: #deferred_down),
-          alwaysApply: true,
+          ephemeral: true,
         ),
       ];
       final db = SyncMockDatabase(defined);
@@ -159,10 +159,10 @@ void main() {
       expect(db.performedMigrations, contains(#deferred_up));
     });
 
-    test('alwaysApply migration that fails still rolls back', () {
+    test('ephemeral migration that fails still rolls back', () {
       final migrator = SyncMigrator<dynamic, Symbol>();
       final defined = [
-        Mig(definedAt: DateTime.utc(2025, 3, 6), up: #working, down: #rollback, alwaysApply: true),
+        Mig(definedAt: DateTime.utc(2025, 3, 6), up: #working, down: #rollback, ephemeral: true),
         SyncMigration<dynamic, Symbol>.deferred(
           definedAt: DateTime.utc(2025, 3, 7),
           builder: (_) => throw Exception('Build failed'),

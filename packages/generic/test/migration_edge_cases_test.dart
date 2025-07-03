@@ -246,7 +246,7 @@ void main() {
         description: 'Original Description',
         up: #original_up,
         down: #original_down,
-        alwaysApply: true,
+        ephemeral: true,
         appliedAt: DateTime.utc(2025, 3, 6, 12, 0),
       );
 
@@ -257,7 +257,7 @@ void main() {
       expect(copy.definedAt, original.definedAt);
       expect(copy.up, original.up);
       expect(copy.down, original.down);
-      expect(copy.alwaysApply, original.alwaysApply);
+      expect(copy.ephemeral, original.ephemeral);
       expect(copy.appliedAt, original.appliedAt);
     });
 
@@ -278,7 +278,7 @@ void main() {
         description: 'New Description',
         up: #new_up,
         down: #new_down,
-        alwaysApply: true,
+        ephemeral: true,
         appliedAt: appliedTime,
       );
 
@@ -287,7 +287,7 @@ void main() {
       expect(copy.description, 'New Description');
       expect(copy.up, #new_up);
       expect(copy.down, #new_down);
-      expect(copy.alwaysApply, isTrue);
+      expect(copy.ephemeral, isTrue);
       expect(copy.appliedAt, appliedTime);
     });
 

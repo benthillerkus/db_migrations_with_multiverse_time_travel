@@ -14,9 +14,9 @@ void main() {
 
     test("Some always apply", () {
       final defined = [
-        Mig(definedAt: DateTime.utc(2025, 3, 6), up: #migration1, down: #rollback1, alwaysApply: true),
-        Mig(definedAt: DateTime.utc(2025, 3, 7), up: #migration2, down: #rollback2, alwaysApply: false),
-        Mig(definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, alwaysApply: true),
+        Mig(definedAt: DateTime.utc(2025, 3, 6), up: #migration1, down: #rollback1, ephemeral: true),
+        Mig(definedAt: DateTime.utc(2025, 3, 7), up: #migration2, down: #rollback2, ephemeral: false),
+        Mig(definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, ephemeral: true),
       ];
       final db = SyncMockDatabase(defined);
 
@@ -31,9 +31,9 @@ void main() {
 
     test("Some always apply", () async {
       final defined = [
-        AMig(definedAt: DateTime.utc(2025, 3, 6), up: #migration1, down: #rollback1, alwaysApply: true),
-        AMig(definedAt: DateTime.utc(2025, 3, 7), up: #migration2, down: #rollback2, alwaysApply: false),
-        AMig(definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, alwaysApply: true),
+        AMig(definedAt: DateTime.utc(2025, 3, 6), up: #migration1, down: #rollback1, ephemeral: true),
+        AMig(definedAt: DateTime.utc(2025, 3, 7), up: #migration2, down: #rollback2, ephemeral: false),
+        AMig(definedAt: DateTime.utc(2025, 3, 8), up: #migration3, down: #rollback3, ephemeral: true),
       ];
       final db = AsyncMockDatabase(defined);
 
