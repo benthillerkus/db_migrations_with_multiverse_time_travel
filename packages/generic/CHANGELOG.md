@@ -1,3 +1,7 @@
+## 2.3.0
+
+- Dependency constraints updated.
+
 ## 2.0.0
 
 - Adds support for migrations that have to run on every connection start, even if they have already been applied.

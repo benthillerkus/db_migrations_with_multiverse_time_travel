@@ -1,3 +1,7 @@
+## 2.3.0
+
+- Support for sqlite3 3.0 releases
+
 ## 2.1.0
 
 - BREAKING: Fixes a design issue with BackupTransactor that would cause rollback to not work if an unclean shutdown occurs during a transaction.
