@@ -8,4 +8,3 @@ environment:
 workspace:
   - packages/generic
   - packages/sqlite3
-  - packages/sqflite
