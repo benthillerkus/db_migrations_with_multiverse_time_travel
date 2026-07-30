@@ -7,7 +7,7 @@ import 'package:sqlite3/common.dart';
 export 'package:db_migrations_with_multiverse_time_travel/db_migrations_with_multiverse_time_travel.dart'
     show SyncMigrateExt;
 
-export 'src/database.dart';
+export 'src/database.dart' hide closeOrDispose;
 export 'src/transaction.dart';
 
 /// Typedef for [p.Migration] over [String].

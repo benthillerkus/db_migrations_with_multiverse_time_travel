@@ -115,7 +115,7 @@ class BackupTransactionDelegate extends Transactor {
         _log.info("Dropping unusable backup file at '${backupFile.path}'.");
         // If the backup file is corrupted, we cannot use it for rollback
         // and can just proceed with the migration.
-        backupDbConnection?.dispose();
+        closeOrDispose(backupDbConnection);
         backupFile.deleteSync();
       }
     }
@@ -140,11 +140,11 @@ class BackupTransactionDelegate extends Transactor {
   /// To do this a new in-memory database connection is created with default settings.
   @override
   void rollback(Sqlite3Database db) {
-    db.db.dispose();
+    closeOrDispose(db.db);
     if (dbFile.path.isEmpty || dbFile.path == ':memory:') {
       final backupDb = sqlite3.open(backupFile.uri.toString(), uri: true);
       db.db = sqlite3.copyIntoMemory(backupDb);
-      backupDb.dispose();
+      closeOrDispose(backupDb);
       backupFile.deleteSync();
     } else {
       backupFile.renameSync(dbFile.path);

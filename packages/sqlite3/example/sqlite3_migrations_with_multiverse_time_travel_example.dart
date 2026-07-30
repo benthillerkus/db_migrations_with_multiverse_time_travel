@@ -1,6 +1,3 @@
-import 'dart:ffi';
-
-import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migrations_with_multiverse_time_travel.dart';
 
@@ -23,7 +20,6 @@ drop table users;
 ];
 
 void main() {
-  open.overrideFor(OperatingSystem.windows, () => DynamicLibrary.open('winsqlite3.dll'));
   final db = sqlite3.openInMemory();
 
   Sqlite3Database((_) => db).migrate(migrations);
@@ -32,5 +28,5 @@ void main() {
     print(row);
   }
 
-  db.dispose();
+  db.close();
 }

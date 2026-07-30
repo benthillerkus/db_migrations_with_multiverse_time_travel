@@ -120,8 +120,8 @@ CREATE TABLE IF NOT EXISTS migrations (
       }
     }
 
-    withAppliedAt.dispose();
-    withoutAppliedAt.dispose();
+    closeOrDispose(withAppliedAt);
+    closeOrDispose(withoutAppliedAt);
   }
 
   @override
@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS migrations (
       stmt.execute([migration.definedAt.millisecondsSinceEpoch]);
     }
 
-    stmt.dispose();
+    closeOrDispose(stmt);
   }
 
   @override
@@ -152,4 +152,20 @@ CREATE TABLE IF NOT EXISTS migrations (
   @override
   @internal
   void rollbackTransaction() => transactor.rollback(this);
+}
+
+/// Disposes the given [obj].
+///
+/// sqlite3 deprecates the `dispose` for `close` in version 3.0.0.
+/// If `close` is available, there's no reason to not use it,
+/// but I don't want to make a breaking change to this library just
+/// because of it.
+@internal
+void closeOrDispose(dynamic obj) {
+  if (obj == null) return;
+  if (obj.close is Function) {
+    obj.close();
+  } else {
+    obj.dispose();
+  }
 }

@@ -14,10 +14,10 @@ resolution: workspace
 
 dependencies:
   logging: ^1.0.0
-  meta: ^1.0.2
+  meta: ^1.9.0
 
 dev_dependencies:
   ansicolor: ^2.0.3
   collection:
-  lints: ^5.0.0
+  lints:
   test: ^1.22.0

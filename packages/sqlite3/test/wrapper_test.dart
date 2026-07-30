@@ -1,8 +1,5 @@
-import 'dart:ffi';
-
 import 'package:fake_async/fake_async.dart';
 import 'package:file/local.dart';
-import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migrations_with_multiverse_time_travel.dart';
 import 'package:sqlite3_test/sqlite3_test.dart';
@@ -14,7 +11,6 @@ void main() {
   late TestSqliteFileSystem vfs;
 
   setUpAll(() {
-    open.overrideFor(OperatingSystem.windows, () => DynamicLibrary.open('winsqlite3.dll'));
     vfs = TestSqliteFileSystem(fs: const LocalFileSystem());
     sqlite3.registerVirtualFileSystem(vfs);
   });
@@ -29,7 +25,7 @@ void main() {
   });
 
   tearDown(() {
-    db.dispose();
+    db.close();
   });
 
   test('Initialize works', () {
@@ -39,7 +35,7 @@ void main() {
 
   test('Initialize has table', () {
     wrapper.initializeMigrationsTable();
-    expect(db.select('select * from sqlite_master where type = "table" and name = "migrations"'), isNotEmpty);
+    expect(db.select("select * from sqlite_master where type = 'table' and name = 'migrations'"), isNotEmpty);
   });
 
   group('After initialization', () {

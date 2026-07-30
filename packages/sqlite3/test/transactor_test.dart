@@ -1,9 +1,7 @@
-import 'dart:ffi';
 import 'dart:io';
 
 import 'package:file/local.dart';
 import 'package:logging/logging.dart';
-import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migrations_with_multiverse_time_travel.dart';
 import 'package:sqlite3_test/sqlite3_test.dart';
@@ -15,7 +13,6 @@ void main() {
   final log = Logger('test');
 
   setUpAll(() {
-    open.overrideFor(OperatingSystem.windows, () => DynamicLibrary.open('winsqlite3.dll'));
     vfs = TestSqliteFileSystem(fs: const LocalFileSystem());
     sqlite3.registerVirtualFileSystem(vfs);
     Logger.root.level = Level.ALL;
@@ -43,7 +40,7 @@ void main() {
 
   test("Transaction", () {
     wrapper = Sqlite3Database((_) => sqlite3.openInMemory(vfs: vfs.name));
-    addTearDown(wrapper.db.dispose);
+    addTearDown(wrapper.db.close);
 
     expect(() => wrapper.migrate(migrations), throwsA(isA<SqliteException>()));
 
@@ -54,7 +51,7 @@ void main() {
 
   test("NoTransaction", () {
     wrapper = Sqlite3Database((_) => sqlite3.openInMemory(vfs: vfs.name), transactor: const NoTransactionDelegate());
-    addTearDown(wrapper.db.dispose);
+    addTearDown(wrapper.db.close);
 
     expect(() => wrapper.migrate(migrations), throwsA(isA<SqliteException>()));
 
@@ -75,7 +72,7 @@ void main() {
         transactor: BackupTransactionDelegate(dbFile: dbFile, backupFile: backupFile),
       );
       addTearDown(() {
-        wrapper.db.dispose();
+        wrapper.db.close();
         dbFile.deleteSync();
       });
       wrapper.db.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)"); // Should be included in the backup
@@ -97,7 +94,7 @@ void main() {
         (_) => sqlite3.openInMemory(),
         transactor: BackupTransactionDelegate(dbFile: File(":memory:"), backupFile: backupFile),
       );
-      addTearDown(wrapper.db.dispose);
+      addTearDown(wrapper.db.close);
       addTearDown(() {
         if (backupFile.existsSync()) {
           backupFile.deleteSync();
@@ -127,7 +124,7 @@ void main() {
       });
       sqlite3.open("backup2.db")
         ..execute("CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)")
-        ..dispose();
+        ..close();
 
       wrapper = Sqlite3Database(
         (_) => sqlite3.openInMemory(),
@@ -138,7 +135,7 @@ void main() {
       );
 
       addTearDown(() {
-        wrapper.db.dispose();
+        wrapper.db.close();
       });
 
       expect(file.existsSync(), isTrue, reason: "Manufactured backup should exist before transaction");
@@ -176,7 +173,7 @@ void main() {
       );
 
       addTearDown(() {
-        wrapper.db.dispose();
+        wrapper.db.close();
         if (file.existsSync()) {
           file.deleteSync();
         }

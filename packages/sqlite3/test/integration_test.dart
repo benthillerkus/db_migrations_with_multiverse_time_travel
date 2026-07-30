@@ -1,8 +1,5 @@
-import 'dart:ffi';
-
 import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
-import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:sqlite3_migrations_with_multiverse_time_travel/sqlite3_migrations_with_multiverse_time_travel.dart';
 import 'package:test/test.dart';
@@ -13,7 +10,6 @@ extension<T> on Iterator<T> {
 
 void main() {
   setUpAll(() {
-    open.overrideFor(OperatingSystem.windows, () => DynamicLibrary.open('winsqlite3.dll'));
     Logger.root.level = Level.ALL;
     Logger.root.onRecord.listen((record) {
       print('${record.loggerName}/${record.level.name}  \t${record.message}');
@@ -27,7 +23,7 @@ void main() {
   });
 
   tearDown(() {
-    db.dispose();
+    db.close();
   });
 
   test('Journey', () {

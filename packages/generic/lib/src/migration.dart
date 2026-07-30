@@ -135,7 +135,7 @@ sealed class Migration<D, S> implements Comparable<Migration<D, S>> {
   /// This might be useful for enabling per session PRAGMAs like `PRAGMA foreign_keys = ON;`
   /// in SQLite that need to be applied every time the database is opened,
   /// but also may be incompatible with some states of the database during the migration.
-  /// 
+  ///
   /// Applying an ephemeral migration does not require a transaction.
   final bool ephemeral;
 
